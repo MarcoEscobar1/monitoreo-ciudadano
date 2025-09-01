@@ -1,0 +1,63 @@
+{
+  "expo": {
+    "name": "monitoreo-ciudadano",
+    "slug": "monitoreo-ciudadano",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "scheme": "monitoreo-ciudadano",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "statusBarStyle": "dark",
+      "infoPlist": {
+        "UIStatusBarStyle": "UIStatusBarStyleDefault",
+        "UIViewControllerBasedStatusBarAppearance": false,
+        "NSLocationWhenInUseUsageDescription": "Esta aplicación necesita acceso a la ubicación para permitirte reportar problemas urbanos en tu zona y mostrar reportes cercanos en el mapa.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Esta aplicación necesita acceso a la ubicación para permitirte reportar problemas urbanos en tu zona y mostrar reportes cercanos en el mapa.",
+        "NSCameraUsageDescription": "Esta aplicación necesita acceso a la cámara para tomar fotos de los problemas urbanos que reportes.",
+        "NSPhotoLibraryUsageDescription": "Esta aplicación necesita acceso a la galería de fotos para seleccionar imágenes de los problemas urbanos que reportes."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": false,
+      "statusBarStyle": "dark",
+      "statusBarBackgroundColor": "#FAFAFA",
+      "navigationBarColor": "#FAFAFA",
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Esta aplicación necesita acceso a la ubicación para permitirte reportar problemas urbanos en tu zona y mostrar reportes cercanos en el mapa.",
+          "locationAlwaysPermission": "Esta aplicación necesita acceso a la ubicación para permitirte reportar problemas urbanos en tu zona y mostrar reportes cercanos en el mapa.",
+          "locationWhenInUsePermission": "Esta aplicación necesita acceso a la ubicación para permitirte reportar problemas urbanos en tu zona y mostrar reportes cercanos en el mapa.",
+          "isIosBackgroundLocationEnabled": false,
+          "isAndroidBackgroundLocationEnabled": false
+        }
+      ],
+      "expo-secure-store",
+      "expo-web-browser"
+    ]
+  }
+}
