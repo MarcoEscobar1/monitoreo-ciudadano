@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const os = require('os');
 require('dotenv').config();
 
 const { pool, testConnection } = require('./src/config/database');
@@ -13,6 +14,7 @@ const reportRoutes = require('./src/routes/reports');
 const categoryRoutes = require('./src/routes/categories');
 const zoneRoutes = require('./src/routes/zones');
 const notificationRoutes = require('./src/routes/notifications');
+const adminRoutes = require('./src/routes/admin');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -24,16 +26,28 @@ const PORT = process.env.PORT || 3000;
 // Helmet para headers de seguridad
 app.use(helmet());
 
-// Rate limiting
+// Rate limiting - configuración más permisiva para desarrollo
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 100 // Límite de 100 requests por IP
+  windowMs: 1 * 60 * 1000, // 1 minuto
+  max: 100, // Límite de 100 requests por minuto por IP
+  message: { success: false, message: 'Demasiadas peticiones, por favor intenta de nuevo más tarde' },
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 app.use(limiter);
 
 // CORS configurado para desarrollo
 app.use(cors({
-  origin: ['http://localhost:19006', 'exp://localhost:19000', 'http://localhost:3000'],
+  origin: [
+    'http://localhost:19006',
+    'exp://localhost:19000',
+    'exp://localhost:8081',
+    'http://localhost:3000',
+    'http://192.168.100.60:8081',
+    'http://192.168.100.60:19006',
+    'exp://192.168.100.60:8081',
+    'exp://192.168.100.60:19000'
+  ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -80,6 +94,7 @@ app.use('/api/reports', reportRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/zones', zoneRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Middleware para rutas no encontradas
 app.use((req, res, next) => {
@@ -130,15 +145,30 @@ const startServer = async () => {
       process.exit(1);
     }
 
+    // Obtener IP local
+    const getLocalIP = () => {
+      const interfaces = os.networkInterfaces();
+      for (const name of Object.keys(interfaces)) {
+        for (const iface of interfaces[name]) {
+          if (iface.family === 'IPv4' && !iface.internal) {
+            return iface.address;
+          }
+        }
+      }
+      return 'localhost';
+    };
+
+    const localIP = getLocalIP();
+
     // Iniciar servidor
     app.listen(PORT, '0.0.0.0', () => {
       console.log('🚀 ===============================================');
       console.log(`🚀 Servidor iniciado en http://0.0.0.0:${PORT}`);
-      console.log(`🚀 Servidor también disponible en http://192.168.100.10:${PORT}`);
+      console.log(`🚀 Servidor también disponible en http://${localIP}:${PORT}`);
       console.log('🚀 ===============================================');
       console.log(`📊 Base de datos: ${dbConnected ? '✅ Conectada' : '❌ Desconectada'}`);
-      console.log(`🌐 API disponible en: http://192.168.100.10:${PORT}/api`);
-      console.log(`💚 Health check: http://192.168.100.10:${PORT}/api/health`);
+      console.log(`🌐 API disponible en: http://${localIP}:${PORT}/api`);
+      console.log(`💚 Health check: http://${localIP}:${PORT}/api/health`);
       console.log('🚀 ===============================================');
     });
 

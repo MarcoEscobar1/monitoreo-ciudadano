@@ -14,23 +14,17 @@ router.get('/', async (req, res) => {
         id,
         nombre,
         descripcion,
-        icono,
-        color,
-        activo,
-        orden_visualizacion as orden
+        activo
       FROM monitoreo_ciudadano.categorias_problemas
       WHERE activo = true
-      ORDER BY orden_visualizacion ASC, nombre ASC
+      ORDER BY nombre ASC
     `);
 
     const categorias = result.rows.map(row => ({
       id: row.id,
       nombre: row.nombre,
       descripcion: row.descripcion,
-      icono: row.icono,
-      color: row.color,
-      activa: row.activo,
-      orden: row.orden
+      activa: row.activo
     }));
 
     res.json({
@@ -66,29 +60,17 @@ router.get('/:id', async (req, res) => {
           id,
           nombre,
           descripcion,
-          icono,
-          color,
-          activo,
-          orden_visualizacion as orden
+          activo
         FROM monitoreo_ciudadano.categorias_problemas
         WHERE id = $1 AND activo = true
       `;
       query_param = id;
     } else if (/^\d+$/.test(id)) {
-      // Es un número (orden)
-      query_text = `
-        SELECT 
-          id,
-          nombre,
-          descripcion,
-          icono,
-          color,
-          activo,
-          orden_visualizacion as orden
-        FROM monitoreo_ciudadano.categorias_problemas
-        WHERE orden_visualizacion = $1 AND activo = true
-      `;
-      query_param = parseInt(id);
+      // Es un número - ya no válido sin orden_visualizacion
+      return res.status(400).json({
+        success: false,
+        message: 'ID de categoría inválido. Use UUID de categoría'
+      });
     } else {
       return res.status(400).json({
         success: false,

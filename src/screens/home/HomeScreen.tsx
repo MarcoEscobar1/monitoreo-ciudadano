@@ -1,12 +1,16 @@
-import React, { useCallback, useState } from 'react';
-import { View, StyleSheet, StatusBar } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import React, { useCallback, useState, useEffect } from 'react';
+import { View, StyleSheet, StatusBar, Alert } from 'react-native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { Snackbar } from 'react-native-paper';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 
 // Importar el nuevo Dashboard de FASE 7
 import { Dashboard } from '../../components/dashboard/Dashboard';
 import DESIGN_SYSTEM from '../../theme/designSystem';
+import { useNotifications } from '../../context/NotificationContext';
+import apiService from '../../services/apiService';
 
 type NavigationProp = StackNavigationProp<any>;
 
@@ -14,6 +18,8 @@ const HomeScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [popupShown, setPopupShown] = useState(false);
+  const { unreadCount } = useNotifications();
 
   const showSnackbar = useCallback((message: string) => {
     setSnackbarMessage(message);
@@ -45,6 +51,81 @@ const HomeScreen: React.FC = () => {
     await new Promise(resolve => setTimeout(resolve, 1500));
     showSnackbar('Datos actualizados correctamente');
   }, [showSnackbar]);
+
+  // Verificar notificaciones sin leer al entrar a la pantalla
+  useFocusEffect(
+    useCallback(() => {
+      const checkUnreadNotifications = async () => {
+        console.log('🏠 HomeScreen: Verificando notificaciones...');
+        console.log('🏠 Popup ya mostrado:', popupShown);
+
+        // Solo mostrar el popup una vez por sesión
+        if (popupShown) {
+          console.log('⏭️ Popup ya fue mostrado, saltando...');
+          return;
+        }
+
+        try {
+          // Esperar un momento para que el token se guarde después del login
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          // Verificar si el usuario está autenticado
+          const token = await SecureStore.getItemAsync('userToken');
+          console.log('🔑 Token existe:', !!token);
+          if (!token) return; // No hacer nada si no hay sesión
+
+          // Obtener notificaciones del backend
+          console.log('📡 Obteniendo notificaciones del backend...');
+          const response = await apiService.notifications.getNotifications();
+          console.log('📬 Respuesta:', response.success, 'Total:', response.data?.length);
+          if (!response.success || !response.data) return;
+
+          // Obtener notificaciones leídas del AsyncStorage
+          const readNotificationsData = await AsyncStorage.getItem('readNotifications');
+          const readNotifications = readNotificationsData 
+            ? new Set(JSON.parse(readNotificationsData)) 
+            : new Set();
+          console.log('📖 Notificaciones leídas:', readNotifications.size);
+
+          // Contar notificaciones sin leer
+          const unreadCount = response.data.filter(
+            (notif: any) => !readNotifications.has(notif.id)
+          ).length;
+          console.log('🔢 Notificaciones sin leer:', unreadCount);
+
+          // Mostrar popup si hay notificaciones sin leer
+          if (unreadCount > 0) {
+            console.log('✅ Mostrando popup de notificaciones...');
+            setTimeout(() => {
+              Alert.alert(
+                '🔔 Notificaciones pendientes',
+                `Tienes ${unreadCount} notificación${unreadCount > 1 ? 'es' : ''} sin leer`,
+                [
+                  { 
+                    text: 'Ver', 
+                    style: 'default',
+                    onPress: () => navigation.navigate('Notifications')
+                  },
+                  { text: 'Después', style: 'cancel' }
+                ]
+              );
+            }, 1000);
+            setPopupShown(true);
+          } else {
+            console.log('📭 No hay notificaciones sin leer');
+          }
+        } catch (error) {
+          // Silenciar errores de autenticación
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          if (!errorMessage.includes('Token de acceso requerido')) {
+            console.error('❌ Error verificando notificaciones:', error);
+          }
+        }
+      };
+
+      checkUnreadNotifications();
+    }, [popupShown, navigation])
+  );
 
   return (
     <View style={styles.container}>

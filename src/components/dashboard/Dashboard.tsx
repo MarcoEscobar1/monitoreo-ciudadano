@@ -20,8 +20,10 @@ import { Card, CardHeader, CardContent, StatCard, ListCard } from '../cards/Card
 import { Button } from '../buttons/Button';
 import { SegmentedControl } from '../navigation/AnimatedNavigation';
 
-// Importar sistema de diseño
+// Importar sistema de diseño y contextos
 import DESIGN_SYSTEM from '../../theme/designSystem';
+import { useAuth } from '../../context/AuthContext';
+import { reporteService } from '../../services/reporteService';
 
 const COLORS = DESIGN_SYSTEM.COLORS;
 
@@ -35,14 +37,9 @@ const { width: screenWidth } = Dimensions.get('window');
 
 interface DashboardStats {
   totalReportes: number;
-  reportesActivos: number;
-  reportesResueltos: number;
-  reportesPendientes: number;
-  cambioSemanal: {
-    total: number;
-    activos: number;
-    resueltos: number;
-  };
+  reportesEnRevision: number;
+  reportesAceptados: number;
+  reportesRechazados: number;
 }
 
 interface RecentReport {
@@ -175,8 +172,8 @@ const getPrioridadColor = (prioridad: 'alta' | 'media' | 'baja'): string => {
 // ================================
 
 const WelcomeSection: React.FC = () => {
-  // Simulamos obtener el nombre del usuario logueado
-  const userName = 'Usuario'; // TODO: Obtener del contexto de autenticación
+  const { user } = useAuth();
+  const userName = user?.nombre || 'Usuario';
 
   return (
     <AnimatedEntrance type="fadeIn" config={{ duration: 600 }}>
@@ -185,7 +182,7 @@ const WelcomeSection: React.FC = () => {
           Bienvenido, {userName}
         </Text>
         <Text variant="bodyLarge" style={styles.welcomeSubtitle}>
-          Aquí tienes un resumen de la actividad ciudadana
+          Aquí tienes un resumen de tus reportes
         </Text>
       </View>
     </AnimatedEntrance>
@@ -197,51 +194,16 @@ const StatsSection: React.FC<{ stats: DashboardStats }> = ({ stats }) => {
     <View style={styles.statsSection}>
       <AnimatedEntrance type="slideInUp" config={{ duration: 600, delay: 400 }}>
         <Card variant="elevated" size="medium" style={styles.unifiedStatsCard}>
-          <CardHeader title="Estadísticas Generales" />
+          <CardHeader title="Mis Estadísticas" />
           <CardContent>
-            {/* Primera fila: Total y Activos */}
+            {/* Primera fila: Total y En Revisión */}
             <View style={styles.statsRow}>
               <View style={styles.statItem}>
                 <View style={styles.statHeader}>
                   <Text style={styles.statIcon}>📊</Text>
                   <View style={styles.statInfo}>
-                    <Text style={styles.statTitle}>TOTAL REPORTES</Text>
-                    <Text style={styles.statValue}>{stats.totalReportes.toLocaleString()}</Text>
-                    <Text style={[styles.statChange, { color: stats.cambioSemanal.total > 0 ? '#4CAF50' : '#F44336' }]}>
-                      {stats.cambioSemanal.total > 0 ? '↑' : '↓'} {Math.abs(stats.cambioSemanal.total)}%
-                    </Text>
-                  </View>
-                </View>
-              </View>
-
-              <View style={styles.statItem}>
-                <View style={styles.statHeader}>
-                  <Text style={styles.statIcon}>🔄</Text>
-                  <View style={styles.statInfo}>
-                    <Text style={styles.statTitle}>ACTIVOS</Text>
-                    <Text style={styles.statValue}>{stats.reportesActivos}</Text>
-                    <Text style={[styles.statChange, { color: stats.cambioSemanal.activos > 0 ? '#4CAF50' : '#F44336' }]}>
-                      {stats.cambioSemanal.activos > 0 ? '↑' : '↓'} {Math.abs(stats.cambioSemanal.activos)}%
-                    </Text>
-                  </View>
-                </View>
-              </View>
-            </View>
-
-            {/* Divisor */}
-            <View style={styles.statsDivider} />
-
-            {/* Segunda fila: Resueltos y Pendientes */}
-            <View style={styles.statsRow}>
-              <View style={styles.statItem}>
-                <View style={styles.statHeader}>
-                  <Text style={styles.statIcon}>✅</Text>
-                  <View style={styles.statInfo}>
-                    <Text style={styles.statTitle}>RESUELTOS</Text>
-                    <Text style={styles.statValue}>{stats.reportesResueltos.toLocaleString()}</Text>
-                    <Text style={[styles.statChange, { color: '#4CAF50' }]}>
-                      ↑ {stats.cambioSemanal.resueltos}%
-                    </Text>
+                    <Text style={styles.statTitle}>TOTAL</Text>
+                    <Text style={styles.statValue}>{stats.totalReportes}</Text>
                   </View>
                 </View>
               </View>
@@ -250,9 +212,34 @@ const StatsSection: React.FC<{ stats: DashboardStats }> = ({ stats }) => {
                 <View style={styles.statHeader}>
                   <Text style={styles.statIcon}>⏳</Text>
                   <View style={styles.statInfo}>
-                    <Text style={styles.statTitle}>PENDIENTES</Text>
-                    <Text style={styles.statValue}>{stats.reportesPendientes}</Text>
-                    <Text style={styles.statChange}>Sin cambios</Text>
+                    <Text style={styles.statTitle}>EN REVISIÓN</Text>
+                    <Text style={styles.statValue}>{stats.reportesEnRevision}</Text>
+                  </View>
+                </View>
+              </View>
+            </View>
+
+            {/* Divisor */}
+            <View style={styles.statsDivider} />
+
+            {/* Segunda fila: Aceptados y Rechazados */}
+            <View style={styles.statsRow}>
+              <View style={styles.statItem}>
+                <View style={styles.statHeader}>
+                  <Text style={styles.statIcon}>✅</Text>
+                  <View style={styles.statInfo}>
+                    <Text style={styles.statTitle}>ACEPTADOS</Text>
+                    <Text style={styles.statValue}>{stats.reportesAceptados}</Text>
+                  </View>
+                </View>
+              </View>
+
+              <View style={styles.statItem}>
+                <View style={styles.statHeader}>
+                  <Text style={styles.statIcon}>❌</Text>
+                  <View style={styles.statInfo}>
+                    <Text style={styles.statTitle}>RECHAZADOS</Text>
+                    <Text style={styles.statValue}>{stats.reportesRechazados}</Text>
                   </View>
                 </View>
               </View>
@@ -371,6 +358,77 @@ const RecentReportsSection: React.FC<{
   );
 };
 
+// Componente de Historial de Reportes
+const HistorialReportesSection: React.FC<{
+  reportes: any[];
+  onViewReport?: (reportId: string) => void;
+  loading: boolean;
+}> = ({ reportes, onViewReport, loading }) => {
+  const getEstadoColor = (reporte: any) => {
+    if (reporte.validado === true) return '#4CAF50'; // Aceptado
+    if (reporte.validado === false) return '#F44336'; // Rechazado
+    return '#FF9800'; // En revisión
+  };
+
+  const getEstadoTexto = (reporte: any) => {
+    if (reporte.validado === true) return '✅ Aceptado';
+    if (reporte.validado === false) return '❌ Rechazado';
+    return '⏳ En revisión';
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text>Cargando reportes...</Text>
+      </View>
+    );
+  }
+
+  if (reportes.length === 0) {
+    return (
+      <AnimatedEntrance type="slideInUp" config={{ duration: 600, delay: 800 }}>
+        <Card variant="elevated" size="medium" style={styles.categoryCard}>
+          <CardHeader title="Historial de Reportes" />
+          <CardContent>
+            <Text style={styles.emptyText}>No tienes reportes aún</Text>
+          </CardContent>
+        </Card>
+      </AnimatedEntrance>
+    );
+  }
+
+  const listItems = reportes.map((reporte) => ({
+    id: reporte.id,
+    title: reporte.titulo,
+    subtitle: reporte.categoria?.nombre || 'Sin categoría',
+    leftIcon: reporte.categoria?.emoji || '📋',
+    rightContent: (
+      <View style={styles.reportStatusContainer}>
+        <Text style={[styles.reportStatus, { color: getEstadoColor(reporte) }]}>
+          {getEstadoTexto(reporte)}
+        </Text>
+      </View>
+    ),
+    onPress: () => {
+      console.log('🔍 Navegando a reporte con ID:', reporte.id);
+      console.log('📝 Datos del reporte:', { id: reporte.id, titulo: reporte.titulo, validado: reporte.validado });
+      onViewReport?.(reporte.id);
+    },
+  }));
+
+  return (
+    <AnimatedEntrance type="slideInUp" config={{ duration: 600, delay: 800 }}>
+      <ListCard
+        title="Historial de Reportes"
+        items={listItems}
+        maxItems={10}
+        showSeeAll={false}
+        style={styles.recentReportsCard}
+      />
+    </AnimatedEntrance>
+  );
+};
+
 // ================================
 // COMPONENTE PRINCIPAL
 // ================================
@@ -381,10 +439,49 @@ export const Dashboard: React.FC<Props> = ({
   onRefresh,
 }) => {
   const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [userStats, setUserStats] = useState<DashboardStats>({
+    totalReportes: 0,
+    reportesEnRevision: 0,
+    reportesAceptados: 0,
+    reportesRechazados: 0,
+  });
+  const [userReports, setUserReports] = useState<any[]>([]);
+
+  // Cargar datos del usuario al montar
+  useEffect(() => {
+    loadUserData();
+  }, []);
+
+  const loadUserData = async () => {
+    try {
+      setLoading(true);
+      
+      // Obtener todos los reportes del usuario
+      const reportes = await reporteService.obtenerMisReportes();
+      console.log('📊 Reportes cargados en Dashboard:', reportes.length);
+      console.log('📋 IDs de reportes:', reportes.map((r: any) => r.id));
+      setUserReports(reportes);
+
+      // Calcular estadísticas
+      const stats = {
+        totalReportes: reportes.length,
+        reportesEnRevision: reportes.filter((r: any) => r.validado === null).length,
+        reportesAceptados: reportes.filter((r: any) => r.validado === true).length,
+        reportesRechazados: reportes.filter((r: any) => r.validado === false).length,
+      };
+      setUserStats(stats);
+    } catch (error) {
+      console.error('Error cargando datos del usuario:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
+      await loadUserData();
       await onRefresh?.();
     } finally {
       setRefreshing(false);
@@ -410,17 +507,14 @@ export const Dashboard: React.FC<Props> = ({
         <WelcomeSection />
 
         {/* Estadísticas */}
-        <StatsSection stats={DASHBOARD_STATS} />
+        <StatsSection stats={userStats} />
 
-        {/* Reportes Recientes */}
-        <RecentReportsSection
-          reports={RECENT_REPORTS}
+        {/* Historial de Reportes */}
+        <HistorialReportesSection
+          reportes={userReports}
           onViewReport={onViewReport}
-          onViewAll={onViewAllReports}
+          loading={loading}
         />
-
-        {/* Categorías */}
-        <CategorySection categories={CATEGORY_STATS} />
 
       </ScrollView>
     </SafeAreaView>
@@ -613,6 +707,21 @@ const styles = StyleSheet.create({
   reportStatus: {
     color: COLORS.text.secondary,
     fontSize: 11,
+  },
+
+  reportStatusContainer: {
+    alignItems: 'flex-end',
+  },
+
+  loadingContainer: {
+    padding: SPACING.base,
+    alignItems: 'center',
+  },
+
+  emptyText: {
+    textAlign: 'center',
+    color: COLORS.text.secondary,
+    padding: SPACING.base,
   },
 });
 

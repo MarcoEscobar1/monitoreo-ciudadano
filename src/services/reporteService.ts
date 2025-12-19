@@ -246,10 +246,7 @@ class ReporteService {
           id: categoria.id,
           nombre: categoria.nombre,
           descripcion: categoria.descripcion || 'Sin descripción',
-          icono: categoria.icono,
-          color: categoria.color,
           activa: categoria.activa,
-          orden: 1,
         },
         zona: { 
           id: 1, 
@@ -291,10 +288,7 @@ class ReporteService {
       return categoria || {
         id: categoriaId,
         nombre: 'Categoría Desconocida',
-        icono: 'help-circle',
-        color: '#757575',
         descripcion: 'Categoría no encontrada',
-        orden: 999,
         activa: true,
       };
     } catch (error) {
@@ -302,10 +296,7 @@ class ReporteService {
       return {
         id: categoriaId,
         nombre: 'Categoría Desconocida',
-        icono: 'help-circle',
-        color: '#757575',
         descripcion: 'Categoría no encontrada',
-        orden: 999,
         activa: true,
       };
     }
@@ -334,6 +325,27 @@ class ReporteService {
     return reportes.sort((a, b) => 
       new Date(b.fecha_creacion).getTime() - new Date(a.fecha_creacion).getTime()
     );
+  }
+
+  /**
+   * Obtener reportes validados para el mapa interactivo
+   * Solo devuelve reportes que han sido validados por admin
+   */
+  async getReportesParaMapa(filtro?: any): Promise<Reporte[]> {
+    try {
+      console.log('🗺️ Obteniendo reportes validados para mapa...');
+      const response = await reportService.getForMap(filtro);
+      
+      if (response.success && response.data && response.data.length > 0) {
+        console.log(`✅ Reportes validados obtenidos: ${response.data.length}`);
+        return response.data;
+      }
+    } catch (error) {
+      console.log('⚠️ Error obteniendo reportes para mapa:', error);
+    }
+
+    // Fallback: filtrar reportes locales solo validados
+    return this.reportes.filter(r => r.validado === true);
   }
 
   /**
@@ -446,6 +458,26 @@ class ReporteService {
     } catch (error) {
       console.error('❌ Error actualizando estado:', error);
       return false;
+    }
+  }
+
+  /**
+   * Obtener reportes del usuario autenticado
+   */
+  async obtenerMisReportes(): Promise<any[]> {
+    try {
+      console.log('📥 Obteniendo reportes del usuario...');
+      const response = await reportService.getMy();
+      
+      if (response.success && response.data) {
+        console.log(`✅ Reportes del usuario obtenidos: ${response.data.length}`);
+        return response.data;
+      }
+      
+      return [];
+    } catch (error) {
+      console.error('❌ Error obteniendo mis reportes:', error);
+      return [];
     }
   }
 }

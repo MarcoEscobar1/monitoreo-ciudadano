@@ -101,8 +101,7 @@ class LocationServiceImpl implements LocationService {
 
       const locationOptions: Location.LocationOptions = {
         accuracy: options.accuracy || Location.Accuracy.Balanced,
-        timeInterval: options.timeout || 10000,
-        distanceInterval: 0,
+        maximumAge: options.maximumAge || 10000,
       };
 
       const location = await Location.getCurrentPositionAsync(locationOptions);
@@ -137,12 +136,36 @@ class LocationServiceImpl implements LocationService {
 
     } catch (error) {
       console.error('❌ Error obteniendo ubicación:', error);
+      
+      // Intentar obtener la última ubicación conocida del sistema
+      try {
+        console.log('🔄 Intentando obtener última ubicación conocida...');
+        const lastLocation = await Location.getLastKnownPositionAsync({
+          maxAge: 300000, // Aceptar ubicaciones de hasta 5 minutos
+          requiredAccuracy: 1000, // Aceptar precisión de hasta 1km
+        });
+        
+        if (lastLocation) {
+          console.log('✅ Usando última ubicación conocida:', lastLocation.coords);
+          const ubicacionCompleta: UbicacionCompleta = {
+            latitude: lastLocation.coords.latitude,
+            longitude: lastLocation.coords.longitude,
+          };
+          this.lastKnownLocation = ubicacionCompleta;
+          return ubicacionCompleta;
+        }
+      } catch (lastLocError) {
+        console.log('⚠️ No hay última ubicación conocida disponible');
+      }
+      
       if (options.showDialog) {
         Alert.alert(
-          'Error de Ubicación',
-          'No se pudo obtener tu ubicación. Asegúrate de que el GPS esté activado e intenta nuevamente.'
+          'Ubicación No Disponible',
+          'No se pudo obtener tu ubicación actual. Por favor:\n\n1. Verifica que el GPS esté activado\n2. Asegúrate de estar al aire libre o cerca de una ventana\n3. Intenta nuevamente en unos segundos',
+          [{ text: 'Entendido' }]
         );
       }
+      
       return this.lastKnownLocation;
     }
   }
@@ -277,10 +300,24 @@ class LocationServiceImpl implements LocationService {
   }
 
   /**
-   * Verificar si hay permisos concedidos
+   * Verificar si hay permisos concedidos (síncrono, puede estar desactualizado)
    */
   hasLocationPermissions(): boolean {
     return this.hasPermissions;
+  }
+
+  /**
+   * Verificar permisos de ubicación de manera asíncrona (más preciso)
+   */
+  async checkPermissions(): Promise<boolean> {
+    try {
+      const { status } = await Location.getForegroundPermissionsAsync();
+      this.hasPermissions = status === Location.PermissionStatus.GRANTED;
+      return this.hasPermissions;
+    } catch (error) {
+      console.error('Error verificando permisos:', error);
+      return false;
+    }
   }
 }
 
@@ -299,6 +336,7 @@ export const useLocation = () => {
     isLocationInRadius: locationService.isLocationInRadius.bind(locationService),
     getLastKnownLocation: locationService.getLastKnownLocation.bind(locationService),
     hasLocationPermissions: locationService.hasLocationPermissions.bind(locationService),
+    checkPermissions: locationService.checkPermissions.bind(locationService),
   };
 };
 

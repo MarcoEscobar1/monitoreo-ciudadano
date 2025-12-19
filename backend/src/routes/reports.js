@@ -5,6 +5,94 @@ const { authenticateToken } = require('../middleware/auth');
 const router = express.Router();
 
 // ================================
+// OBTENER REPORTES DEL USUARIO AUTENTICADO
+// ================================
+
+router.get('/my', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    console.log(`📥 GET /api/reports/my - Usuario: ${userId}`);
+
+    const result = await query(`
+      SELECT 
+        r.id,
+        r.usuario_id,
+        r.categoria_id,
+        r.titulo,
+        r.descripcion,
+        r.estado,
+        r.prioridad,
+        r.validado,
+        r.comentarios_validacion,
+        r.fecha_creacion,
+        r.fecha_actualizacion,
+        r.imagen_principal,
+        r.imagenes_adicionales,
+        ST_X(r.ubicacion::geometry) as longitude,
+        ST_Y(r.ubicacion::geometry) as latitude,
+        r.direccion,
+        cp.nombre as categoria_nombre
+      FROM monitoreo_ciudadano.reportes r
+      LEFT JOIN monitoreo_ciudadano.categorias_problemas cp ON r.categoria_id = cp.id
+      WHERE r.usuario_id = $1
+      ORDER BY r.fecha_creacion DESC
+    `, [userId]);
+
+    console.log(`✅ Reportes encontrados: ${result.rows.length}`);
+
+    // Transformar los resultados
+    const reportes = result.rows.map(row => {
+      // Construir array de imágenes
+      const imagenes = [];
+      if (row.imagen_principal) {
+        imagenes.push(row.imagen_principal);
+      }
+      if (row.imagenes_adicionales && Array.isArray(row.imagenes_adicionales)) {
+        imagenes.push(...row.imagenes_adicionales);
+      }
+
+      return {
+        id: row.id,
+        usuario_id: row.usuario_id,
+        categoria_id: row.categoria_id,
+        titulo: row.titulo,
+        descripcion: row.descripcion,
+        estado: row.estado,
+        prioridad: row.prioridad,
+        validado: row.validado,
+        comentarios_validacion: row.comentarios_validacion,
+        fecha_creacion: row.fecha_creacion,
+        fecha_actualizacion: row.fecha_actualizacion,
+        imagenes: imagenes,
+        ubicacion: {
+          latitude: row.latitude ? parseFloat(row.latitude) : null,
+          longitude: row.longitude ? parseFloat(row.longitude) : null
+        },
+        direccion: row.direccion,
+        categoria: {
+          id: row.categoria_id,
+          nombre: row.categoria_nombre
+        }
+      };
+    });
+
+    res.json({
+      success: true,
+      data: reportes
+    });
+
+  } catch (error) {
+    console.error('❌ Error obteniendo mis reportes:', error);
+    console.error('Stack trace:', error.stack);
+    res.status(500).json({
+      success: false,
+      message: 'Error al obtener reportes',
+      error: error.message
+    });
+  }
+});
+
+// ================================
 // OBTENER REPORTES PARA MAPA
 // ================================
 
@@ -26,12 +114,11 @@ router.get('/mapa', async (req, res) => {
         r.fecha_creacion,
         ST_X(r.ubicacion) as longitude,
         ST_Y(r.ubicacion) as latitude,
-        cp.nombre as categoria_nombre,
-        cp.icono as categoria_icono,
-        cp.color as categoria_color
+        cp.nombre as categoria_nombre
       FROM monitoreo_ciudadano.reportes r
       LEFT JOIN monitoreo_ciudadano.categorias_problemas cp ON r.categoria_id = cp.id
       WHERE r.visible_publicamente = true
+        AND r.validado = true
         AND r.ubicacion IS NOT NULL
     `;
 
@@ -69,9 +156,7 @@ router.get('/mapa', async (req, res) => {
         longitude: parseFloat(row.longitude)
       },
       categoria: {
-        nombre: row.categoria_nombre,
-        icono: row.categoria_icono,
-        color: row.categoria_color
+        nombre: row.categoria_nombre
       }
     }));
 
@@ -180,10 +265,6 @@ router.get('/', async (req, res) => {
         u.nombre as usuario_nombre,
         cp.id as categoria_id,
         cp.nombre as categoria_nombre,
-        cp.icono as categoria_icono,
-        cp.color as categoria_color,
-        zg.id as zona_id,
-        zg.nombre as zona_nombre,
         (SELECT COUNT(*) FROM monitoreo_ciudadano.comentarios c WHERE c.reporte_id = r.id) as comentarios_count,
         COALESCE(r.imagenes_adicionales, ARRAY[]::text[]) as imagenes
         ${distanceSelect}
@@ -234,8 +315,6 @@ router.get('/', async (req, res) => {
       categoria: {
         id: row.categoria_id,
         nombre: row.categoria_nombre,
-        icono: row.categoria_icono,
-        color: row.categoria_color,
         activa: true,
         orden: 1
       },
@@ -279,6 +358,7 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    console.log(`📥 GET /api/reports/${id} - Buscando reporte...`);
 
     const result = await query(`
       SELECT 
@@ -287,30 +367,34 @@ router.get('/:id', async (req, res) => {
         r.descripcion,
         r.estado,
         r.prioridad,
+        r.validado,
+        r.comentarios_validacion,
         r.fecha_creacion,
         r.fecha_actualizacion,
         ST_X(r.ubicacion) as longitude,
         ST_Y(r.ubicacion) as latitude,
         r.direccion,
+        r.imagen_principal,
         r.votos_ciudadanos as likes,
         0 as dislikes,
         u.id as usuario_id,
         u.nombre as usuario_nombre,
+        u.email as usuario_email,
         cp.id as categoria_id,
         cp.nombre as categoria_nombre,
-        cp.icono as categoria_icono,
-        cp.color as categoria_color,
         zg.id as zona_id,
-        zg.nombre as zona_nombre,
-        COALESCE(r.imagenes_adicionales, ARRAY[]::text[]) as imagenes
+        zg.nombre as zona_nombre
       FROM monitoreo_ciudadano.reportes r
       LEFT JOIN monitoreo_ciudadano.usuarios u ON r.usuario_id = u.id
       LEFT JOIN monitoreo_ciudadano.categorias_problemas cp ON r.categoria_id = cp.id
       LEFT JOIN monitoreo_ciudadano.zonas_geograficas zg ON r.zona_geografica_id = zg.id
-      WHERE r.id = $1 AND r.visible_publicamente = true
+      WHERE r.id = $1
     `, [id]);
 
+    console.log(`✅ Resultado de búsqueda: ${result.rows.length} reportes encontrados`);
+
     if (result.rows.length === 0) {
+      console.log(`❌ Reporte ${id} no encontrado en la base de datos`);
       return res.status(404).json({
         success: false,
         message: 'Reporte no encontrado'
@@ -318,17 +402,29 @@ router.get('/:id', async (req, res) => {
     }
 
     const row = result.rows[0];
+    
+    // Construir array de imágenes
+    const imagenes = [];
+    if (row.imagen_principal) {
+      imagenes.push(row.imagen_principal);
+    }
+    if (row.imagenes && Array.isArray(row.imagenes)) {
+      imagenes.push(...row.imagenes);
+    }
+    
     const reporte = {
       id: row.id,
       titulo: row.titulo,
       descripcion: row.descripcion,
       estado: row.estado,
       prioridad: row.prioridad,
+      validado: row.validado,
+      comentarios_validacion: row.comentarios_validacion,
       fecha_creacion: row.fecha_creacion,
       fecha_actualizacion: row.fecha_actualizacion,
       ubicacion: {
-        latitude: row.latitude,
-        longitude: row.longitude
+        latitude: parseFloat(row.latitude),
+        longitude: parseFloat(row.longitude)
       },
       direccion: row.direccion,
       likes: row.likes || 0,
@@ -337,13 +433,12 @@ router.get('/:id', async (req, res) => {
       comentarios_count: 0,
       usuario: {
         id: row.usuario_id,
-        nombre: row.usuario_nombre
+        nombre: row.usuario_nombre,
+        email: row.usuario_email
       },
       categoria: {
         id: row.categoria_id,
         nombre: row.categoria_nombre,
-        icono: row.categoria_icono,
-        color: row.categoria_color,
         activa: true,
         orden: 1
       },
@@ -354,7 +449,7 @@ router.get('/:id', async (req, res) => {
         coordenadas: [],
         activa: true
       },
-      imagenes: row.imagenes || []
+      imagenes: imagenes
     };
 
     res.json({
@@ -404,39 +499,40 @@ router.post('/', authenticateToken, async (req, res) => {
       });
     }
 
-    const nuevoReporte = await transaction(async (client) => {
-      // Primero obtener la zona geográfica para estas coordenadas
-      const zonaResult = await client.query(`
-        SELECT monitoreo_ciudadano.obtener_zona_por_ubicacion($1, $2) as zona_id
-      `, [ubicacion.latitude, ubicacion.longitude]);
-      
-      const zona_id = zonaResult.rows[0]?.zona_id;
+    // Validar que haya al menos una imagen
+    if (!imagenes || imagenes.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Se requiere al menos una imagen del problema'
+      });
+    }
 
-      // Crear el reporte con zona geográfica asignada
-      const reporteResult = await client.query(`
-        INSERT INTO monitoreo_ciudadano.reportes (
-          usuario_id, categoria_id, titulo, descripcion,
-          ubicacion, direccion, estado, prioridad, validado, imagenes_adicionales, zona_geografica_id
-        ) VALUES ($1, $2, $3, $4, 
-          ST_SetSRID(ST_MakePoint($5, $6), 4326),
-          $7, 'PENDIENTE', $8, false, $9, $10
-        )
-        RETURNING id, fecha_creacion
-      `, [
-        userId,
-        categoria_id,
-        titulo,
-        descripcion,
-        ubicacion.longitude,
-        ubicacion.latitude,
-        direccion || '',
-        prioridad.toUpperCase(),
-        imagenes,
-        zona_id
-      ]);
+    // Preparar imágenes
+    const imagenesArray = imagenes;
 
-      return reporteResult.rows[0].id;
-    });
+    // Crear el reporte (sin zona geográfica por ahora)
+    const reporteResult = await query(`
+      INSERT INTO monitoreo_ciudadano.reportes (
+        usuario_id, categoria_id, titulo, descripcion,
+        ubicacion, direccion, estado, prioridad, validado, imagenes_adicionales
+      ) VALUES ($1, $2, $3, $4, 
+        ST_SetSRID(ST_MakePoint($5, $6), 4326),
+        $7, 'PENDIENTE', $8, FALSE, $9
+      )
+      RETURNING id, fecha_creacion
+    `, [
+      userId,
+      categoria_id,
+      titulo,
+      descripcion,
+      ubicacion.longitude,
+      ubicacion.latitude,
+      direccion || '',
+      prioridad.toUpperCase(),
+      imagenesArray
+    ]);
+
+    const nuevoReporte = reporteResult.rows[0].id;
 
     // Obtener el reporte completo creado
     const reporteCompleto = await query(`
@@ -451,9 +547,7 @@ router.post('/', authenticateToken, async (req, res) => {
         ST_Y(r.ubicacion) as latitude,
         r.direccion,
         u.nombre as usuario_nombre,
-        cp.nombre as categoria_nombre,
-        cp.icono as categoria_icono,
-        cp.color as categoria_color
+        cp.nombre as categoria_nombre
       FROM monitoreo_ciudadano.reportes r
       LEFT JOIN monitoreo_ciudadano.usuarios u ON r.usuario_id = u.id
       LEFT JOIN monitoreo_ciudadano.categorias_problemas cp ON r.categoria_id = cp.id
@@ -481,9 +575,7 @@ router.post('/', authenticateToken, async (req, res) => {
           nombre: row.usuario_nombre
         },
         categoria: {
-          nombre: row.categoria_nombre,
-          icono: row.categoria_icono,
-          color: row.categoria_color
+          nombre: row.categoria_nombre
         },
         imagenes
       }

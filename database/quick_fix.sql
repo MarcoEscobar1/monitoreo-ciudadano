@@ -4,7 +4,7 @@
 -- =====================================================
 
 -- Conectar al esquema correcto
-\c appmovil;
+\c monitoreo_ciudadano;
 SET search_path TO monitoreo_ciudadano, public;
 
 -- 1. Corregir función de zona

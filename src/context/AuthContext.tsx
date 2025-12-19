@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 import * as AuthSession from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
@@ -18,11 +19,12 @@ interface AuthState {
 
 interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<boolean>;
-  register: (name: string, email: string, password: string, phone?: string) => Promise<boolean>;
+  register: (name: string, email: string, password: string, phone?: string, apellidos?: string) => Promise<boolean>;
   loginWithGoogle: () => Promise<boolean>;
   loginWithFacebook: () => Promise<boolean>;
   logout: () => Promise<void>;
   resetPassword: (email: string) => Promise<boolean>;
+  updateUser: (userData: Partial<Usuario>) => Promise<void>;
 }
 
 type AuthAction =
@@ -125,18 +127,28 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const response = await authService.login(email, password);
 
       if (response.success && response.data) {
+        // Si la cuenta requiere validación
+        if (response.data.requiresValidation) {
+          console.log('⏳ Cuenta pendiente de validación');
+          dispatch({ type: 'LOGOUT' });
+          throw new Error('ACCOUNT_PENDING_VALIDATION');
+        }
+
         const { user, token } = response.data;
 
         // Convertir datos del backend al formato del contexto
         const usuario: Usuario = {
           id: user.id,
           nombre: user.nombre,
+          apellidos: user.apellidos,
           email: user.email,
           telefono: user.telefono,
+          direccion: user.direccion,
           fecha_registro: new Date(user.fecha_registro),
           activo: user.activo,
           avatar_url: undefined,
           role: user.role || 'user',
+          tipo_usuario: user.tipo_usuario,
           configuracion_notificaciones: {
             push_reportes_cercanos: true,
             push_actualizaciones: true,
@@ -147,55 +159,43 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           reportes_validados: 0,
         };
 
+        // Guardar token y usuario en SecureStore
+        await SecureStore.setItemAsync('userToken', token);
+        await SecureStore.setItemAsync('userData', JSON.stringify(usuario));
+        console.log('💾 Token y usuario guardados en SecureStore');
+
+        // Guardar token y usuario en SecureStore
+        await SecureStore.setItemAsync('userToken', token);
+        await SecureStore.setItemAsync('userData', JSON.stringify(usuario));
+        console.log('💾 Token y usuario guardados en SecureStore');
+
         // Actualizar estado
         dispatch({ type: 'LOGIN_SUCCESS', payload: { user: usuario, token } });
 
         console.log('✅ Login exitoso con backend');
+        console.log('👤 Tipo de usuario:', user.tipo_usuario);
         return true;
       }
 
-      return false;
-    } catch (error) {
+      // Si el backend respondió pero las credenciales son incorrectas
+      console.error('❌ Credenciales incorrectas');
+      dispatch({ type: 'LOGOUT' });
+      throw new Error('Credenciales incorrectas');
+    } catch (error: any) {
       console.error('❌ Error en login:', error);
+      dispatch({ type: 'LOGOUT' });
       
-      // En caso de error del backend, simular login para desarrollo
-      console.log('🔄 Backend no disponible, usando modo demo...');
+      // Propagar el error para que el LoginScreen lo maneje
+      if (error.message) {
+        throw error;
+      }
       
-      const user: Usuario = {
-        id: 1,
-        nombre: 'Usuario Demo',
-        email: email,
-        telefono: undefined,
-        fecha_registro: new Date(),
-        activo: true,
-        avatar_url: undefined,
-        role: 'user',
-        configuracion_notificaciones: {
-          push_reportes_cercanos: true,
-          push_actualizaciones: true,
-          push_emergencias: true,
-          email_resumen_semanal: false,
-        },
-        total_reportes: 0,
-        reportes_validados: 0,
-      };
-
-      const token = `demo_token_${Date.now()}`;
-
-      // Guardar en SecureStore
-      await SecureStore.setItemAsync('userToken', token);
-      await SecureStore.setItemAsync('userData', JSON.stringify(user));
-
-      // Actualizar estado
-      dispatch({ type: 'LOGIN_SUCCESS', payload: { user, token } });
-
-      console.log('✅ Login exitoso (modo demo)');
-      return true;
+      throw new Error('Error de conexión con el servidor. Intenta nuevamente.');
     }
   };
 
   // Función de registro
-  const register = async (name: string, email: string, password: string, phone?: string): Promise<boolean> => {
+  const register = async (name: string, email: string, password: string, phone?: string, apellidos?: string): Promise<boolean> => {
     try {
       dispatch({ type: 'LOADING' });
 
@@ -204,12 +204,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // Usar el servicio de autenticación real
       const response = await authService.register({
         nombre: name,
+        apellidos: apellidos || '',
         email: email,
         password: password,
         telefono: phone
       });
 
       if (response.success && response.data) {
+        // Si el registro requiere validación, no iniciar sesión automáticamente
+        if (response.data.requiresValidation) {
+          console.log('✅ Registro exitoso - Requiere validación del administrador');
+          dispatch({ type: 'LOGOUT' });
+          throw new Error('REQUIRES_VALIDATION');
+        }
+
         const { user, token } = response.data;
 
         // Convertir datos del backend al formato del contexto
@@ -222,6 +230,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           activo: user.activo,
           avatar_url: undefined,
           role: user.role || 'user',
+          tipo_usuario: user.tipo_usuario,
           configuracion_notificaciones: {
             push_reportes_cercanos: true,
             push_actualizaciones: true,
@@ -239,43 +248,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return true;
       }
 
-      return false;
-    } catch (error) {
+      console.error('❌ Registro fallido');
+      dispatch({ type: 'LOGOUT' });
+      throw new Error('No se pudo completar el registro');
+    } catch (error: any) {
       console.error('❌ Error en registro:', error);
-
-      // En caso de error del backend, simular registro para desarrollo
-      console.log('🔄 Backend no disponible, usando modo demo...');
-
-      const user: Usuario = {
-        id: Math.floor(Math.random() * 1000),
-        nombre: name,
-        email: email,
-        telefono: phone,
-        fecha_registro: new Date(),
-        activo: true,
-        avatar_url: undefined,
-        role: 'user',
-        configuracion_notificaciones: {
-          push_reportes_cercanos: true,
-          push_actualizaciones: true,
-          push_emergencias: true,
-          email_resumen_semanal: false,
-        },
-        total_reportes: 0,
-        reportes_validados: 0,
-      };
-
-      const token = `demo_token_${Date.now()}`;
-
-      // Guardar en SecureStore
-      await SecureStore.setItemAsync('userToken', token);
-      await SecureStore.setItemAsync('userData', JSON.stringify(user));
-
-      // Actualizar estado
-      dispatch({ type: 'LOGIN_SUCCESS', payload: { user, token } });
-
-      console.log('✅ Registro exitoso (modo demo)');
-      return true;
+      dispatch({ type: 'LOGOUT' });
+      
+      // Propagar el error para que el RegisterScreen lo maneje
+      if (error.message) {
+        throw error;
+      }
+      
+      throw new Error('Error de conexión con el servidor. Intenta nuevamente.');
     }
   };
 
@@ -433,9 +418,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               throw new Error('Token inválido');
             }
           } catch (error) {
-            // Si no se puede verificar con backend, usar datos locales temporalmente
-            console.log('⚠️ Backend no disponible, usando sesión local');
-            dispatch({ type: 'RESTORE_TOKEN', payload: { user, token } });
+            // Si no se puede verificar con backend, eliminar sesión inválida
+            console.log('⚠️ Token inválido o backend no disponible, cerrando sesión');
+            await SecureStore.deleteItemAsync('userToken');
+            await SecureStore.deleteItemAsync('userData');
+            dispatch({ type: 'LOGOUT' });
           }
         } else {
           dispatch({ type: 'LOGOUT' });
@@ -464,6 +451,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [facebookResponse]);
 
+  // Actualizar datos del usuario en contexto
+  const updateUser = async (userData: Partial<Usuario>) => {
+    if (state.user) {
+      const updatedUser = { ...state.user, ...userData };
+      dispatch({
+        type: 'LOGIN_SUCCESS',
+        payload: { user: updatedUser, token: state.token || '' }
+      });
+      // Guardar en AsyncStorage
+      await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
+    }
+  };
+
   const value: AuthContextType = {
     ...state,
     login,
@@ -472,6 +472,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     loginWithFacebook,
     logout,
     resetPassword,
+    updateUser,
   };
 
   return (

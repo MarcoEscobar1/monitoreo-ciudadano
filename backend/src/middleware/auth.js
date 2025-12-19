@@ -39,7 +39,27 @@ const optionalAuth = (req, res, next) => {
   next();
 };
 
+const adminMiddleware = (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({
+      success: false,
+      message: 'Autenticación requerida'
+    });
+  }
+
+  if (req.user.tipo_usuario !== 'ADMINISTRADOR' && req.user.tipo_usuario !== 'MODERADOR') {
+    return res.status(403).json({
+      success: false,
+      message: 'Acceso denegado. Solo administradores pueden acceder a este recurso'
+    });
+  }
+
+  next();
+};
+
 module.exports = {
   authenticateToken,
-  optionalAuth
+  authMiddleware: authenticateToken,
+  optionalAuth,
+  adminMiddleware
 };

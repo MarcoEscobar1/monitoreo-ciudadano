@@ -5,8 +5,8 @@
 -- Fecha: Agosto 2025
 -- =====================================================
 
--- Conectar a la base de datos 'appmovil'
-\c appmovil;
+-- Conectar a la base de datos 'monitoreo_ciudadano'
+\c monitoreo_ciudadano;
 
 -- Habilitar extensiones necesarias
 CREATE EXTENSION IF NOT EXISTS postgis;

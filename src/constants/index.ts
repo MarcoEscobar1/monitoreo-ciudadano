@@ -13,7 +13,7 @@ export const APP_CONFIG = {
 
 // Configuración de la API
 export const API_CONFIG = {
-  baseUrl: process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api',
+  baseUrl: process.env.EXPO_PUBLIC_API_URL || 'http://192.168.100.60:3001/api',
   timeout: 10000,
   retryAttempts: 3,
   retryDelay: 1000,

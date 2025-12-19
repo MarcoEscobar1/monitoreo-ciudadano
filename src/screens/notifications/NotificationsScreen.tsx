@@ -1,61 +1,171 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Switch, TouchableOpacity, Alert } from 'react-native';
+import React, { useState, useMemo, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from '@react-navigation/native';
 import DESIGN_SYSTEM from '../../theme/designSystem';
 import { AnimatedEntrance, AnimatedListItem } from '../../components/animated/AnimatedEntrance';
-import { Card, CardHeader, CardContent, ListCard } from '../../components/cards/Card';
+import { Card, CardHeader, CardContent } from '../../components/cards/Card';
 import { Button } from '../../components/buttons/Button';
+import apiService from '../../services/apiService';
+import { useNotifications } from '../../context/NotificationContext';
 
 interface NotificationItem {
   id: string;
-  title: string;
-  message: string;
-  type: 'update' | 'new_report' | 'validation' | 'emergency' | 'system';
-  timestamp: Date;
+  titulo: string;
+  mensaje: string;
+  tipo: 'accepted' | 'rejected' | 'pending';
+  timestamp: string | Date;
   read: boolean;
   iconEmoji: string;
+  reportTitle: string;
+  reporte_id: number;
 }
 
 const NotificationsScreen: React.FC = () => {
-  const [pushEnabled, setPushEnabled] = useState(true);
-  const [proximityEnabled, setProximityEnabled] = useState(true);
-  const [emergencyEnabled, setEmergencyEnabled] = useState(true);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [readNotifications, setReadNotifications] = useState<Set<string>>(new Set());
+  const { refreshUnreadCount } = useNotifications();
 
-  const [notifications, setNotifications] = useState<NotificationItem[]>([
-    {
-      id: '1',
-      title: 'Reporte actualizado',
-      message: 'Tu reporte "Bache en Av. Principal" ha sido marcado como "En progreso"',
-      type: 'update',
-      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 horas atrás
-      read: false,
-      iconEmoji: '🔄'
-    },
-    {
-      id: '2',
-      title: 'Nuevo reporte cercano',
-      message: 'Se reportó "Alumbrado público deficiente" a 200m de tu ubicación',
-      type: 'new_report',
-      timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000), // 5 horas atrás
-      read: false,
-      iconEmoji: '�'
-    },
-    {
-      id: '4',
-      title: 'Validación recibida',
-      message: '5 usuarios han validado tu reporte como útil',
-      type: 'validation',
-      timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 días atrás
-      read: true,
-      iconEmoji: '👍'
-    },
-  ]);
+  // Guardar notificaciones leídas en AsyncStorage
+  const saveReadNotifications = async (readSet: Set<string>) => {
+    try {
+      console.log('💾 Guardando notificaciones leídas:', Array.from(readSet));
+      await AsyncStorage.setItem('readNotifications', JSON.stringify(Array.from(readSet)));
+    } catch (error) {
+      console.error('Error guardando notificaciones leídas:', error);
+    }
+  };
 
-  const getTypeColor = (type: NotificationItem['type']) => {
-    switch (type) {
-      case 'emergency': return DESIGN_SYSTEM.COLORS.error[500];
-      case 'update': return DESIGN_SYSTEM.COLORS.primary[500];
-      case 'validation': return DESIGN_SYSTEM.COLORS.success[500];
-      case 'new_report': return DESIGN_SYSTEM.COLORS.secondary[500];
+  // Cargar notificaciones desde el backend
+  const fetchNotifications = async (showLoader = true, readSet?: Set<string>) => {
+    try {
+      if (showLoader) setLoading(true);
+      
+      console.log('📡 Llamando a API de notificaciones...');
+      const response = await apiService.notifications.getNotifications();
+      console.log('✅ Respuesta recibida:', response);
+      
+      if (response.success && response.data) {
+        // Usar el readSet proporcionado o el estado actual
+        const currentReadSet = readSet || readNotifications;
+        
+        // Transformar los datos del backend al formato del frontend
+        const transformedNotifications = response.data.map((notif: any) => ({
+          id: notif.id,
+          titulo: notif.titulo,
+          mensaje: notif.mensaje,
+          tipo: notif.tipo,
+          timestamp: new Date(notif.timestamp),
+          read: currentReadSet.has(notif.id), // Usar el estado de leído local
+          iconEmoji: notif.iconEmoji,
+          reportTitle: notif.reportTitle,
+          reporte_id: notif.reporte_id
+        }));
+        
+        console.log('📋 Notificaciones transformadas:', transformedNotifications.length);
+        setNotifications(transformedNotifications);
+      } else {
+        console.log('⚠️ No hay datos en la respuesta');
+        setNotifications([]);
+      }
+    } catch (error) {
+      console.error('❌ Error cargando notificaciones:', error);
+      setNotifications([]);
+      Alert.alert(
+        'Error',
+        'No se pudieron cargar las notificaciones. Intenta nuevamente.',
+        [{ text: 'OK' }]
+      );
+    } finally {
+      console.log('✅ Finalizando carga...');
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    const initializeNotifications = async () => {
+      try {
+        console.log('🔄 Inicializando notificaciones...');
+        const readNotifs = await AsyncStorage.getItem('readNotifications');
+        let readSet = new Set<string>();
+        
+        if (readNotifs) {
+          try {
+            const parsedArray = JSON.parse(readNotifs);
+            console.log('📄 Datos parseados:', parsedArray);
+            
+            // Validar que sea un array
+            if (Array.isArray(parsedArray)) {
+              // Limpiar y filtrar solo IDs válidos
+              parsedArray.forEach((id) => {
+                if (id && typeof id === 'string' && id.startsWith('notif-')) {
+                  readSet.add(id);
+                }
+              });
+            }
+          } catch (parseError) {
+            console.error('❌ Error parseando notificaciones:', parseError);
+            // Si hay error al parsear, limpiar el storage
+            await AsyncStorage.removeItem('readNotifications');
+          }
+        }
+        
+        console.log('📖 Notificaciones leídas cargadas:', Array.from(readSet));
+        setReadNotifications(readSet);
+        
+        await fetchNotifications(true, readSet);
+      } catch (error) {
+        console.error('❌ Error en inicialización:', error);
+        setLoading(false);
+        setNotifications([]);
+      }
+    };
+    
+    initializeNotifications();
+  }, []);
+
+  // Refrescar notificaciones cuando la pantalla obtiene el foco
+  useFocusEffect(
+    React.useCallback(() => {
+      console.log('🔄 Pantalla de notificaciones obtuvo el foco, refrescando...');
+      fetchNotifications(false);
+    }, [])
+  );
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    fetchNotifications(false);
+  };
+
+  // Separar notificaciones recientes (no leídas o las últimas 2 leídas) del historial
+  const { recentNotifications, historyNotifications } = useMemo(() => {
+    // Notificaciones no leídas van a recientes
+    const unread = notifications.filter(n => !n.read);
+    
+    // De las leídas, solo las últimas 2 van a recientes
+    const read = notifications.filter(n => n.read);
+    const recentRead = read.slice(0, 2);
+    const oldRead = read.slice(2);
+
+    const recent = [...unread, ...recentRead].sort((a, b) => {
+      const dateA = a.timestamp instanceof Date ? a.timestamp : new Date(a.timestamp);
+      const dateB = b.timestamp instanceof Date ? b.timestamp : new Date(b.timestamp);
+      return dateB.getTime() - dateA.getTime();
+    });
+
+    const history = oldRead;
+
+    return { recentNotifications: recent, historyNotifications: history };
+  }, [notifications]);
+
+  const getTypeColor = (tipo: NotificationItem['tipo']) => {
+    switch (tipo) {
+      case 'accepted': return DESIGN_SYSTEM.COLORS.success[500];
+      case 'rejected': return DESIGN_SYSTEM.COLORS.error[500];
+      case 'pending': return DESIGN_SYSTEM.COLORS.warning[500];
       default: return DESIGN_SYSTEM.COLORS.neutral[500];
     }
   };
@@ -69,10 +179,17 @@ const NotificationsScreen: React.FC = () => {
     if (diffHours < 1) return 'Hace unos minutos';
     if (diffHours < 24) return `Hace ${diffHours}h`;
     if (diffDays === 1) return 'Ayer';
-    return `Hace ${diffDays} días`;
+    if (diffDays < 7) return `Hace ${diffDays} días`;
+    if (diffDays < 30) return `Hace ${Math.floor(diffDays / 7)} semana${Math.floor(diffDays / 7) > 1 ? 's' : ''}`;
+    return `Hace ${Math.floor(diffDays / 30)} mes${Math.floor(diffDays / 30) > 1 ? 'es' : ''}`;
   };
 
-  const marcarComoLeida = (notificationId: string) => {
+  const marcarComoLeida = async (notificationId: string) => {
+    const newReadSet = new Set(readNotifications);
+    newReadSet.add(notificationId);
+    setReadNotifications(newReadSet);
+    await saveReadNotifications(newReadSet);
+    
     setNotifications(prevNotifications => 
       prevNotifications.map(notification => 
         notification.id === notificationId 
@@ -80,6 +197,9 @@ const NotificationsScreen: React.FC = () => {
           : notification
       )
     );
+    
+    // Actualizar el contador en el contexto
+    refreshUnreadCount();
   };
 
   const marcarTodasComoLeidas = () => {
@@ -105,13 +225,23 @@ const NotificationsScreen: React.FC = () => {
         {
           text: 'Marcar como leídas',
           style: 'default',
-          onPress: () => {
+          onPress: async () => {
+            const newReadSet = new Set(readNotifications);
+            notifications.forEach(notif => newReadSet.add(notif.id));
+            setReadNotifications(newReadSet);
+            await saveReadNotifications(newReadSet);
+            
             setNotifications(prevNotifications => 
               prevNotifications.map(notification => ({
                 ...notification,
                 read: true
               }))
             );
+            
+            // Actualizar el contador en el contexto
+            if (refreshUnreadCount) {
+              refreshUnreadCount();
+            }
             
             Alert.alert(
               '✅ Completado',
@@ -124,121 +254,95 @@ const NotificationsScreen: React.FC = () => {
     );
   };
 
+  const renderNotificationItem = (notification: NotificationItem, index: number) => (
+    <AnimatedListItem key={notification.id} index={index}>
+      <TouchableOpacity 
+        style={[
+          styles.notificationItem,
+          !notification.read && styles.notificationUnread
+        ]}
+        activeOpacity={0.7}
+        onPress={() => marcarComoLeida(notification.id)}
+      >
+        <View style={styles.notificationIcon}>
+          <Text style={styles.iconEmoji}>{notification.iconEmoji}</Text>
+          <View 
+            style={[
+              styles.typeIndicator, 
+              { backgroundColor: getTypeColor(notification.tipo) }
+            ]} 
+          />
+        </View>
+        
+        <View style={styles.notificationContent}>
+          <View style={styles.notificationHeader}>
+            <Text style={styles.notificationTitle}>{notification.titulo}</Text>
+            <Text style={styles.notificationTime}>
+              {formatTimestamp(notification.timestamp instanceof Date ? notification.timestamp : new Date(notification.timestamp))}
+            </Text>
+          </View>
+          <Text style={styles.notificationMessage}>{notification.mensaje}</Text>
+        </View>
+
+        {!notification.read && <View style={styles.unreadDot} />}
+      </TouchableOpacity>
+    </AnimatedListItem>
+  );
+
+  // Mostrar loader mientras carga
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.centerContent]}>
+        <ActivityIndicator size="large" color={DESIGN_SYSTEM.COLORS.primary[500]} />
+        <Text style={styles.loadingText}>Cargando notificaciones...</Text>
+        <TouchableOpacity 
+          style={styles.cancelButton}
+          onPress={() => {
+            setLoading(false);
+            setNotifications([]);
+          }}
+        >
+          <Text style={styles.cancelButtonText}>Cancelar</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.content}>
         <AnimatedEntrance type="slideInDown">
           <View style={styles.header}>
-            <Text style={styles.title}>Notificaciones</Text>
+            <Text style={styles.title}>🔔 Notificaciones</Text>
             <Text style={styles.subtitle}>
-              Mantente informado sobre actualizaciones de tus reportes y actividad en tu zona
+              Revisa el estado de tus reportes ciudadanos
             </Text>
+            {notifications.length > 0 && (
+              <TouchableOpacity onPress={handleRefresh} style={styles.refreshButton}>
+                <Text style={styles.refreshText}>🔄 Actualizar</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </AnimatedEntrance>
 
-        <AnimatedEntrance type="fadeIn">
-          <Card style={styles.configCard}>
-            <CardHeader title="Configuración de notificaciones" />
-            <CardContent>
-              <View style={styles.configItem}>
-                <View style={styles.configInfo}>
-                  <Text style={styles.configLabel}>Push notifications</Text>
-                  <Text style={styles.configDescription}>Recibir notificaciones instantáneas</Text>
-                </View>
-                <Switch
-                  value={pushEnabled}
-                  onValueChange={setPushEnabled}
-                  trackColor={{ 
-                    false: DESIGN_SYSTEM.COLORS.neutral[300], 
-                    true: DESIGN_SYSTEM.COLORS.primary[200] 
-                  }}
-                  thumbColor={pushEnabled ? DESIGN_SYSTEM.COLORS.primary[500] : DESIGN_SYSTEM.COLORS.neutral[50]}
-                />
-              </View>
-
-              <View style={styles.configItem}>
-                <View style={styles.configInfo}>
-                  <Text style={styles.configLabel}>Reportes cercanos</Text>
-                  <Text style={styles.configDescription}>Notificar sobre reportes en tu zona</Text>
-                </View>
-                <Switch
-                  value={proximityEnabled}
-                  onValueChange={setProximityEnabled}
-                  trackColor={{ 
-                    false: DESIGN_SYSTEM.COLORS.neutral[300], 
-                    true: DESIGN_SYSTEM.COLORS.primary[200] 
-                  }}
-                  thumbColor={proximityEnabled ? DESIGN_SYSTEM.COLORS.primary[500] : DESIGN_SYSTEM.COLORS.neutral[50]}
-                />
-              </View>
-
-              <View style={styles.configItem}>
-                <View style={styles.configInfo}>
-                  <Text style={styles.configLabel}>Emergencias</Text>
-                  <Text style={styles.configDescription}>Alertas de reportes de emergencia</Text>
-                </View>
-                <Switch
-                  value={emergencyEnabled}
-                  onValueChange={setEmergencyEnabled}
-                  trackColor={{ 
-                    false: DESIGN_SYSTEM.COLORS.neutral[300], 
-                    true: DESIGN_SYSTEM.COLORS.error[50] 
-                  }}
-                  thumbColor={emergencyEnabled ? DESIGN_SYSTEM.COLORS.error[500] : DESIGN_SYSTEM.COLORS.neutral[50]}
-                />
-              </View>
-            </CardContent>
-          </Card>
-        </AnimatedEntrance>
-
+        {/* Notificaciones Recientes */}
         <AnimatedEntrance type="fadeIn">
           <Card style={styles.notificationsCard}>
             <CardHeader 
-              title="Notificaciones recientes" 
-              subtitle={`${notifications.filter(n => !n.read).length} sin leer`}
+              title="Recientes" 
+              subtitle={`${recentNotifications.filter(n => !n.read).length} sin leer`}
             />
             <CardContent style={styles.notificationsList}>
-              {notifications.length > 0 ? (
-                notifications.map((notification, index) => (
-                  <AnimatedListItem key={notification.id} index={index}>
-                    <TouchableOpacity 
-                      style={[
-                        styles.notificationItem,
-                        !notification.read && styles.notificationUnread
-                      ]}
-                      activeOpacity={0.7}
-                      onPress={() => marcarComoLeida(notification.id)}
-                    >
-                      <View style={styles.notificationIcon}>
-                        <Text style={styles.iconEmoji}>{notification.iconEmoji}</Text>
-                        <View 
-                          style={[
-                            styles.typeIndicator, 
-                            { backgroundColor: getTypeColor(notification.type) }
-                          ]} 
-                        />
-                      </View>
-                      
-                      <View style={styles.notificationContent}>
-                        <View style={styles.notificationHeader}>
-                          <Text style={styles.notificationTitle}>{notification.title}</Text>
-                          <Text style={styles.notificationTime}>
-                            {formatTimestamp(notification.timestamp)}
-                          </Text>
-                        </View>
-                        <Text style={styles.notificationMessage}>{notification.message}</Text>
-                      </View>
-
-                      {!notification.read && <View style={styles.unreadDot} />}
-                    </TouchableOpacity>
-                  </AnimatedListItem>
-                ))
+              {recentNotifications.length > 0 ? (
+                recentNotifications.map((notification, index) => 
+                  renderNotificationItem(notification, index)
+                )
               ) : (
                 <View style={styles.emptyState}>
-                  <Text style={styles.emptyIcon}>🔔</Text>
-                  <Text style={styles.emptyTitle}>No hay notificaciones</Text>
+                  <Text style={styles.emptyIcon}>📭</Text>
+                  <Text style={styles.emptyTitle}>No hay notificaciones recientes</Text>
                   <Text style={styles.emptyText}>
-                    Cuando tengas notificaciones aparecerán aquí
+                    Aquí verás el estado de tus reportes más recientes
                   </Text>
                 </View>
               )}
@@ -246,6 +350,7 @@ const NotificationsScreen: React.FC = () => {
           </Card>
         </AnimatedEntrance>
 
+        {/* Botón para marcar todas como leídas */}
         {notifications.some(n => !n.read) && (
           <AnimatedEntrance type="fadeIn">
             <View style={styles.actionButtons}>
@@ -257,6 +362,31 @@ const NotificationsScreen: React.FC = () => {
             </View>
           </AnimatedEntrance>
         )}
+
+        {/* Historial de Notificaciones */}
+        <AnimatedEntrance type="fadeIn">
+          <Card style={styles.notificationsCard}>
+            <CardHeader 
+              title="Historial" 
+              subtitle={`${historyNotifications.length} notificación${historyNotifications.length !== 1 ? 'es' : ''}`}
+            />
+            <CardContent style={styles.notificationsList}>
+              {historyNotifications.length > 0 ? (
+                historyNotifications.map((notification, index) => 
+                  renderNotificationItem(notification, index)
+                )
+              ) : (
+                <View style={styles.emptyState}>
+                  <Text style={styles.emptyIcon}>📂</Text>
+                  <Text style={styles.emptyTitle}>Sin historial</Text>
+                  <Text style={styles.emptyText}>
+                    El historial de tus reportes anteriores aparecerá aquí
+                  </Text>
+                </View>
+              )}
+            </CardContent>
+          </Card>
+        </AnimatedEntrance>
       </View>
     </ScrollView>
   );
@@ -267,11 +397,40 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: DESIGN_SYSTEM.COLORS.neutral[50],
   },
+  centerContent: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: DESIGN_SYSTEM.SPACING.base,
+    fontSize: DESIGN_SYSTEM.TYPOGRAPHY.fontSizes.base,
+    color: DESIGN_SYSTEM.COLORS.neutral[600],
+  },
+  cancelButton: {
+    marginTop: DESIGN_SYSTEM.SPACING.lg,
+    paddingVertical: DESIGN_SYSTEM.SPACING.sm,
+    paddingHorizontal: DESIGN_SYSTEM.SPACING.lg,
+  },
+  cancelButtonText: {
+    fontSize: DESIGN_SYSTEM.TYPOGRAPHY.fontSizes.sm,
+    color: DESIGN_SYSTEM.COLORS.primary[500],
+    textDecorationLine: 'underline',
+  },
   content: {
     padding: DESIGN_SYSTEM.SPACING.base,
   },
   header: {
     marginBottom: DESIGN_SYSTEM.SPACING.lg,
+    marginTop: DESIGN_SYSTEM.SPACING.base,
+  },
+  refreshButton: {
+    marginTop: DESIGN_SYSTEM.SPACING.sm,
+    alignSelf: 'flex-start',
+  },
+  refreshText: {
+    fontSize: DESIGN_SYSTEM.TYPOGRAPHY.fontSizes.sm,
+    color: DESIGN_SYSTEM.COLORS.primary[500],
+    fontWeight: DESIGN_SYSTEM.TYPOGRAPHY.fontWeights.medium,
   },
   title: {
     fontSize: DESIGN_SYSTEM.TYPOGRAPHY.fontSizes['3xl'],
@@ -283,31 +442,6 @@ const styles = StyleSheet.create({
     fontSize: DESIGN_SYSTEM.TYPOGRAPHY.fontSizes.base,
     color: DESIGN_SYSTEM.COLORS.neutral[600],
     lineHeight: 24,
-  },
-  configCard: {
-    marginBottom: DESIGN_SYSTEM.SPACING.base,
-  },
-  configItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: DESIGN_SYSTEM.SPACING.base,
-    borderBottomWidth: 1,
-    borderBottomColor: DESIGN_SYSTEM.COLORS.neutral[200],
-  },
-  configInfo: {
-    flex: 1,
-    marginRight: DESIGN_SYSTEM.SPACING.base,
-  },
-  configLabel: {
-    fontSize: DESIGN_SYSTEM.TYPOGRAPHY.fontSizes.base,
-    fontWeight: DESIGN_SYSTEM.TYPOGRAPHY.fontWeights.medium,
-    color: DESIGN_SYSTEM.COLORS.neutral[800],
-    marginBottom: DESIGN_SYSTEM.SPACING.xs,
-  },
-  configDescription: {
-    fontSize: DESIGN_SYSTEM.TYPOGRAPHY.fontSizes.sm,
-    color: DESIGN_SYSTEM.COLORS.neutral[600],
   },
   notificationsCard: {
     marginBottom: DESIGN_SYSTEM.SPACING.base,
@@ -381,7 +515,7 @@ const styles = StyleSheet.create({
   },
   emptyState: {
     alignItems: 'center',
-    paddingVertical: DESIGN_SYSTEM.SPACING['3xl'],
+    paddingVertical: DESIGN_SYSTEM.SPACING['2xl'],
   },
   emptyIcon: {
     fontSize: 48,
@@ -400,7 +534,7 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   actionButtons: {
-    marginTop: DESIGN_SYSTEM.SPACING.lg,
+    marginTop: DESIGN_SYSTEM.SPACING.base,
     marginBottom: DESIGN_SYSTEM.SPACING['2xl'],
   },
 });

@@ -21,10 +21,11 @@ import { Input } from '../../components/inputs/Input';
 
 const RegisterScreen: React.FC = () => {
   const navigation = useNavigation();
-  const { register, loginWithGoogle, isLoading } = useAuth();
+  const { register, isLoading } = useAuth();
 
   const [formData, setFormData] = useState({
     name: '',
+    apellidos: '',
     email: '',
     password: '',
     confirmPassword: '',
@@ -36,6 +37,7 @@ const RegisterScreen: React.FC = () => {
 
   const [errors, setErrors] = useState({
     name: '',
+    apellidos: '',
     email: '',
     password: '',
     confirmPassword: '',
@@ -53,6 +55,19 @@ const RegisterScreen: React.FC = () => {
       return false;
     }
     setErrors(prev => ({ ...prev, name: '' }));
+    return true;
+  };
+
+  const validateApellidos = (apellidos: string): boolean => {
+    if (!apellidos) {
+      setErrors(prev => ({ ...prev, apellidos: 'Los apellidos son requeridos' }));
+      return false;
+    }
+    if (apellidos.length < 2) {
+      setErrors(prev => ({ ...prev, apellidos: 'Los apellidos deben tener al menos 2 caracteres' }));
+      return false;
+    }
+    setErrors(prev => ({ ...prev, apellidos: '' }));
     return true;
   };
 
@@ -139,40 +154,52 @@ const RegisterScreen: React.FC = () => {
   // Manejar registro con email
   const handleEmailRegister = async () => {
     const isNameValid = validateName(formData.name);
+    const isApellidosValid = validateApellidos(formData.apellidos);
     const isEmailValid = validateEmail(formData.email);
     const isPasswordValid = validatePassword(formData.password);
     const isConfirmPasswordValid = validateConfirmPassword(formData.confirmPassword, formData.password);
     const isTermsValid = validateTerms();
 
-    if (isNameValid && isEmailValid && isPasswordValid && isConfirmPasswordValid && isTermsValid) {
+    if (isNameValid && isApellidosValid && isEmailValid && isPasswordValid && isConfirmPasswordValid && isTermsValid) {
       try {
-        const success = await register(formData.name, formData.email, formData.password);
+        const success = await register(formData.name, formData.email, formData.password, undefined, formData.apellidos);
         if (!success) {
-          Alert.alert('Error', 'No se pudo crear la cuenta. Verifica que el email no esté en uso.');
+          Alert.alert(
+            '❌ Error en registro',
+            'No se pudo crear la cuenta. Verifica que el email no esté en uso.',
+            [{ text: 'Entendido' }]
+          );
         }
-      } catch (error) {
-        Alert.alert('Error', 'No se pudo crear la cuenta. Intenta nuevamente.');
+      } catch (error: any) {
         console.log('Error en registro:', error);
+        
+        // Si requiere validación, mostrar mensaje especial y volver a login
+        if (error.message === 'REQUIRES_VALIDATION') {
+          Alert.alert(
+            '✅ Cuenta creada exitosamente',
+            'Tu cuenta ha sido creada. Un administrador debe validarla antes de que puedas iniciar sesión. Te notificaremos cuando tu cuenta esté lista.',
+            [
+              { 
+                text: 'Entendido',
+                onPress: () => navigation.navigate('Login')
+              }
+            ]
+          );
+          return;
+        }
+        
+        const errorMessage = error.message || 'No se pudo crear la cuenta. Intenta nuevamente.';
+        
+        Alert.alert(
+          '❌ Error en registro',
+          errorMessage,
+          [{ text: 'Entendido' }]
+        );
       }
     }
   };
 
-  // Manejar login con Google
-  const handleGoogleRegister = async () => {
-    if (!acceptTerms) {
-      setErrors(prev => ({ ...prev, terms: 'Debes aceptar los términos y condiciones' }));
-      return;
-    }
 
-    try {
-      const success = await loginWithGoogle();
-      if (!success) {
-        Alert.alert('Error', 'No se pudo registrar con Google');
-      }
-    } catch (error) {
-      Alert.alert('Error', 'No se pudo registrar con Google');
-    }
-  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -196,13 +223,22 @@ const RegisterScreen: React.FC = () => {
 
         <AnimatedEntrance type="fadeIn">
           <Card style={styles.card}>
-            <CardContent style={styles.cardContent}>
+            <CardContent>
               {/* Formulario de Registro */}
               <Input
-                label="Nombre completo"
+                label="Nombre(s)"
                 value={formData.name}
                 onChangeText={(value: string) => handleInputChange('name', value)}
                 error={errors.name}
+                leftIcon="👤"
+                style={styles.input}
+              />
+
+              <Input
+                label="Apellidos"
+                value={formData.apellidos}
+                onChangeText={(value: string) => handleInputChange('apellidos', value)}
+                error={errors.apellidos}
                 leftIcon="👤"
                 style={styles.input}
               />
@@ -274,23 +310,6 @@ const RegisterScreen: React.FC = () => {
                 disabled={isLoading}
               />
 
-              <View style={styles.divider}>
-                <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>O regístrate con</Text>
-                <View style={styles.dividerLine} />
-              </View>
-
-              {/* OAuth Buttons */}
-              <View style={styles.oauthContainer}>
-                <Button
-                  variant="outlined"
-                  title="Google"
-                  onPress={handleGoogleRegister}
-                  icon={<Text>🔍</Text>}
-                  style={styles.googleButton}
-                  disabled={isLoading}
-                />
-              </View>
             </CardContent>
           </Card>
         </AnimatedEntrance>
@@ -407,31 +426,6 @@ const styles = StyleSheet.create({
   registerButton: {
     marginTop: DESIGN_SYSTEM.SPACING.lg,
     marginBottom: DESIGN_SYSTEM.SPACING.base,
-  },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: DESIGN_SYSTEM.SPACING.lg,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: DESIGN_SYSTEM.COLORS.neutral[300],
-  },
-  dividerText: {
-    fontSize: DESIGN_SYSTEM.TYPOGRAPHY.fontSizes.sm,
-    color: DESIGN_SYSTEM.COLORS.text.secondary,
-    marginHorizontal: DESIGN_SYSTEM.SPACING.base,
-  },
-  oauthContainer: {
-    gap: DESIGN_SYSTEM.SPACING.sm,
-  },
-  oauthButton: {
-    marginBottom: DESIGN_SYSTEM.SPACING.sm,
-  },
-  googleButton: {
-    borderColor: DESIGN_SYSTEM.COLORS.primary[500],
-    marginBottom: DESIGN_SYSTEM.SPACING.sm,
   },
   footer: {
     alignItems: 'center',

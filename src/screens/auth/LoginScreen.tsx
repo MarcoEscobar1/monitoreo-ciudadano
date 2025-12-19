@@ -18,7 +18,6 @@ import {
   Text,
   TextInput,
   ActivityIndicator,
-  Divider,
   IconButton,
 } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -35,7 +34,7 @@ import { useAuth } from '../../context/AuthContext';
 
 const LoginScreen: React.FC = () => {
   const navigation = useNavigation();
-  const { login, loginWithGoogle, isLoading } = useAuth();
+  const { login, isLoading } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -87,24 +86,38 @@ const LoginScreen: React.FC = () => {
     }
 
     try {
-      await login(email, password);
-    } catch (error) {
+      const success = await login(email, password);
+      if (!success) {
+        Alert.alert(
+          '❌ Error de autenticación',
+          'Usuario o contraseña incorrectos. Por favor, verifica tus credenciales e intenta nuevamente.',
+          [{ text: 'Entendido' }]
+        );
+      }
+    } catch (error: any) {
       console.error('Error en login:', error);
+      
+      // Si la cuenta está pendiente de validación
+      if (error.message === 'ACCOUNT_PENDING_VALIDATION') {
+        Alert.alert(
+          '⏳ Cuenta pendiente de validación',
+          'Tu cuenta está esperando aprobación del administrador. Te notificaremos cuando puedas iniciar sesión.',
+          [{ text: 'Entendido' }]
+        );
+        return;
+      }
+      
+      const errorMessage = error.message || 'Usuario o contraseña incorrectos';
+      
       Alert.alert(
-        'Error de autenticación',
-        'Usuario o contraseña incorrectos'
+        '❌ Error de autenticación',
+        errorMessage,
+        [{ text: 'Entendido' }]
       );
     }
   };
 
-  const handleGoogleLogin = async () => {
-    try {
-      await loginWithGoogle();
-    } catch (error) {
-      console.error('Error en login con Google:', error);
-      Alert.alert('Error', 'No se pudo iniciar sesión con Google');
-    }
-  };
+
 
   const handleForgotPassword = () => {
     navigation.navigate('ForgotPassword' as never);
@@ -241,34 +254,6 @@ const LoginScreen: React.FC = () => {
           </Card>
         </AnimatedEntrance>
 
-        {/* Separador */}
-        <AnimatedEntrance type="fadeIn" config={{ duration: 400, delay: 400 }}>
-          <View style={styles.dividerContainer}>
-            <Divider style={styles.divider} />
-            <Text variant="bodyMedium" style={styles.dividerText}>
-              O continúa con
-            </Text>
-            <Divider style={styles.divider} />
-          </View>
-        </AnimatedEntrance>
-
-        {/* Botón de Google */}
-        <AnimatedEntrance type="slideInUp" config={{ duration: 600, delay: 500 }}>
-          <View style={styles.socialButtons}>
-            <AnimatedListItem index={0} staggerDelay={150}>
-              <Button
-                title="Google"
-                onPress={handleGoogleLogin}
-                variant="outlined"
-                color="primary"
-                size="large"
-                style={styles.googleButton}
-                icon={<Text style={styles.googleIcon}>G</Text>}
-              />
-            </AnimatedListItem>
-          </View>
-        </AnimatedEntrance>
-
         {/* Registro */}
         <AnimatedEntrance type="fadeIn" config={{ duration: 400, delay: 600 }}>
           <View style={styles.registerContainer}>
@@ -380,38 +365,6 @@ const styles = StyleSheet.create({
 
   forgotButton: {
     alignSelf: 'center',
-  },
-
-  dividerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: DESIGN_SYSTEM.SPACING.lg,
-  },
-
-  divider: {
-    flex: 1,
-    backgroundColor: DESIGN_SYSTEM.COLORS.neutral[300],
-  },
-
-  dividerText: {
-    color: DESIGN_SYSTEM.COLORS.neutral[600],
-    marginHorizontal: DESIGN_SYSTEM.SPACING.base,
-  },
-
-  socialButtons: {
-    gap: DESIGN_SYSTEM.SPACING.sm,
-    marginBottom: DESIGN_SYSTEM.SPACING.lg,
-  },
-
-  googleButton: {
-    borderWidth: 1.5,
-    borderColor: '#4285F4',
-  },
-
-  googleIcon: {
-    color: '#4285F4',
-    fontWeight: 'bold',
-    fontSize: 16,
   },
 
   registerContainer: {

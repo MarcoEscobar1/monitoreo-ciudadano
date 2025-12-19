@@ -32,7 +32,7 @@ CREATE TABLE usuarios (
         (metodo_auth IN ('GOOGLE', 'FACEBOOK') AND oauth_id IS NOT NULL)
     ),
     CONSTRAINT chk_email_format CHECK (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'),
-    CONSTRAINT chk_telefono_format CHECK (telefono IS NULL OR telefono ~ '^\+?[0-9\s\-\(\)]{10,20}$')
+    CONSTRAINT chk_telefono_format CHECK (telefono IS NULL OR telefono ~ '^[0-9]{8}$')
 );
 
 -- Índices para usuarios

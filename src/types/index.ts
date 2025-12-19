@@ -2,15 +2,18 @@
 export interface Usuario {
   id: number;
   nombre: string;
+  apellidos?: string;
   email: string;
   telefono?: string;
+  direccion?: string;
   fecha_registro: Date;
   activo: boolean;
   avatar_url?: string;
   role: 'admin' | 'moderator' | 'user' | 'guest';
-  configuracion_notificaciones: ConfiguracionNotificaciones;
-  total_reportes: number;
-  reportes_validados: number;
+  tipo_usuario?: 'ADMINISTRADOR' | 'MODERADOR' | 'CIUDADANO';
+  configuracion_notificaciones?: ConfiguracionNotificaciones;
+  total_reportes?: number;
+  reportes_validados?: number;
 }
 
 // Tipo de Usuario para contexto de autenticación
@@ -51,6 +54,7 @@ export interface Reporte {
   dislikes: number;
   validaciones: number;
   comentarios_count: number;
+  validado?: boolean; // Campo para control de validación por admin
   usuario: Partial<Usuario>;
   categoria: CategoriaProblema;
   zona: ZonaGeografica;
@@ -78,11 +82,7 @@ export interface CategoriaProblema {
   id: string;
   nombre: string;
   descripcion: string;
-  icono: string;
-  color: string;
   activa: boolean;
-  orden: number;
-  emoji?: string; // Emoji para visualización en la UI
 }
 
 // Tipos de Zonas Geográficas

@@ -44,6 +44,8 @@ interface Report {
     nombre: string;
     email: string;
   };
+  validado?: boolean | null;
+  comentarios_validacion?: string;
 }
 
 interface ReportUpdate {
@@ -99,18 +101,23 @@ interface PriorityBadgeProps {
 // DATOS Y UTILIDADES
 // ================================
 
-const getStatusColor = (status: string): string => {
-  switch (status.toLowerCase()) {
-    case 'nuevo':
-      return COLORS.reportStatus.nuevo;
-    case 'en progreso':
-      return COLORS.reportStatus.en_progreso;
-    case 'resuelto':
-      return COLORS.reportStatus.resuelto;
-    case 'cerrado':
-      return COLORS.reportStatus.cerrado;
-    default:
-      return COLORS.neutral[500];
+const getStatusColor = (validado: boolean | null | undefined): string => {
+  if (validado === true) {
+    return '#10B981'; // Verde - Aprobado
+  } else if (validado === false) {
+    return '#EF4444'; // Rojo - Rechazado
+  } else {
+    return '#F59E0B'; // Amarillo - Pendiente
+  }
+};
+
+const getStatusText = (validado: boolean | null | undefined): string => {
+  if (validado === true) {
+    return 'Aprobado';
+  } else if (validado === false) {
+    return 'Rechazado';
+  } else {
+    return 'En Revisión';
   }
 };
 
@@ -246,49 +253,31 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
 
 const ReportHeader: React.FC<{
   report: Report;
-  onBack: () => void;
-  onShare: () => void;
-  onEdit?: () => void;
-  onDelete?: () => void;
-}> = ({ report, onBack, onShare, onEdit, onDelete }) => {
+}> = ({ report }) => {
+  const statusColor = getStatusColor(report.validado);
+  const statusText = getStatusText(report.validado);
+  
   return (
     <AnimatedEntrance type="slideInDown" config={{ duration: 400 }}>
       <Surface style={styles.header} elevation={2}>
-        <View style={styles.headerTop}>
-          <IconButton
-            icon="arrow-left"
-            size={24}
-            onPress={onBack}
-            iconColor={COLORS.text.primary}
-          />
-          <ActionButtons
-            onEdit={onEdit}
-            onDelete={onDelete}
-            onShare={onShare}
-            report={report}
-          />
-        </View>
-
         <View style={styles.headerContent}>
           <Text variant="headlineSmall" style={styles.title}>
             {report.titulo}
           </Text>
 
           <View style={styles.headerMeta}>
-            <StatusBadge status={report.estado} />
-            <PriorityBadge priority={report.prioridad} />
             <Chip
               mode="flat"
               style={[
-                styles.categoryChip,
-                { borderColor: getCategoryColor(report.categoria) },
+                styles.statusBadge,
+                { backgroundColor: `${statusColor}20`, borderColor: statusColor },
               ]}
               textStyle={[
-                styles.categoryChipText,
-                { color: getCategoryColor(report.categoria) },
+                styles.statusBadgeText,
+                { color: statusColor },
               ]}
             >
-              {report.categoria}
+              {statusText}
             </Chip>
           </View>
         </View>
@@ -298,11 +287,24 @@ const ReportHeader: React.FC<{
 };
 
 const ReportInfo: React.FC<{ report: Report }> = ({ report }) => {
+  const priorityText = report.prioridad.charAt(0).toUpperCase() + report.prioridad.slice(1);
+  const priorityIcon = report.prioridad === 'alta' ? '🔴' : report.prioridad === 'media' ? '🟡' : '🟢';
+  
   const infoItems = [
     {
       icon: '📅',
       label: 'Fecha de creación',
       value: formatDate(report.fechaCreacion),
+    },
+    {
+      icon: '📂',
+      label: 'Categoría',
+      value: report.categoria,
+    },
+    {
+      icon: priorityIcon,
+      label: 'Prioridad',
+      value: priorityText,
     },
     {
       icon: '👤',
@@ -362,6 +364,27 @@ const ReportDescription: React.FC<{ description: string }> = ({ description }) =
         <CardContent>
           <Text variant="bodyLarge" style={styles.description}>
             {description}
+          </Text>
+        </CardContent>
+      </Card>
+    </AnimatedEntrance>
+  );
+};
+
+const RejectionNotice: React.FC<{ comentarios: string }> = ({ comentarios }) => {
+  return (
+    <AnimatedEntrance type="slideInUp" config={{ duration: 400, delay: 350 }}>
+      <Card variant="elevated" size="medium" style={styles.rejectionCard}>
+        <CardHeader 
+          title="⚠️ Reporte Rechazado" 
+          titleStyle={styles.rejectionTitle}
+        />
+        <CardContent>
+          <Text variant="bodyMedium" style={styles.rejectionLabel}>
+            Motivo del rechazo:
+          </Text>
+          <Text variant="bodyLarge" style={styles.rejectionComment}>
+            {comentarios}
           </Text>
         </CardContent>
       </Card>
@@ -490,13 +513,7 @@ export const ReportDetail: React.FC<ReportDetailProps> = ({
 
   return (
     <SafeAreaView style={styles.container}>
-      <ReportHeader
-        report={report}
-        onBack={onBack}
-        onShare={handleShare}
-        onEdit={onEdit}
-        onDelete={handleDelete}
-      />
+      <ReportHeader report={report} />
 
       <ScrollView
         style={styles.scrollView}
@@ -509,42 +526,10 @@ export const ReportDetail: React.FC<ReportDetailProps> = ({
         {/* Descripción */}
         <ReportDescription description={report.descripcion} />
 
-        {/* Acciones rápidas */}
-        <QuickActions
-          onStatusUpdate={onStatusUpdate}
-          onAddUpdate={onAddUpdate}
-          currentStatus={report.estado}
-        />
-
-        {/* Timeline de actualizaciones */}
-        <AnimatedEntrance type="slideInUp" config={{ duration: 400, delay: 500 }}>
-          <Card variant="elevated" size="medium" style={styles.timelineCard}>
-            <CardHeader title="Historial de Actualizaciones" />
-            <CardContent>
-              <View style={styles.timelinePlaceholder}>
-                <Text variant="bodyMedium" style={styles.timelinePlaceholderText}>
-                  Timeline de actualizaciones se mostrará aquí
-                </Text>
-                {updates.map((update, index) => (
-                  <View key={update.id} style={styles.updateItem}>
-                    <Text variant="bodySmall" style={styles.updateDate}>
-                      {formatDate(update.fecha)}
-                    </Text>
-                    <Text variant="bodyLarge" style={styles.updateStatus}>
-                      Estado: {update.estado}
-                    </Text>
-                    <Text variant="bodyMedium" style={styles.updateComment}>
-                      {update.comentario}
-                    </Text>
-                    <Text variant="bodySmall" style={styles.updateUser}>
-                      Por: {update.usuario}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            </CardContent>
-          </Card>
-        </AnimatedEntrance>
+        {/* Motivo de rechazo (solo si está rechazado) */}
+        {report.validado === false && report.comentarios_validacion && (
+          <RejectionNotice comentarios={report.comentarios_validacion} />
+        )}
 
         {/* Espaciado inferior */}
         <View style={styles.bottomSpacing} />
@@ -703,6 +688,30 @@ const styles = StyleSheet.create({
   description: {
     color: COLORS.text.primary,
     lineHeight: 24,
+  },
+
+  rejectionCard: {
+    marginBottom: SPACING.base,
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1,
+    borderColor: '#FCA5A5',
+  },
+
+  rejectionTitle: {
+    color: '#DC2626',
+    fontWeight: '700',
+  },
+
+  rejectionLabel: {
+    color: '#991B1B',
+    fontWeight: '600',
+    marginBottom: SPACING.sm,
+  },
+
+  rejectionComment: {
+    color: '#7F1D1D',
+    lineHeight: 24,
+    fontStyle: 'italic',
   },
 
   actionsCard: {

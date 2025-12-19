@@ -35,6 +35,7 @@ import designSystem from '../../theme/designSystem';
 import { reporteService } from '../../services/reporteService';
 import { categoriaService } from '../../services/categoriaService';
 import { useLocation } from '../../services/locationService';
+import { useNotifications } from '../../context/NotificationContext';
 import { PrioridadReporte } from '../../types';
 
 // ================================
@@ -44,10 +45,7 @@ import { PrioridadReporte } from '../../types';
 interface CategoriaOption {
   id: string;
   nombre: string;
-  icono: string;
-  color: string;
   descripcion: string;
-  emoji?: string;
 }
 
 // ================================
@@ -57,6 +55,7 @@ interface CategoriaOption {
 const CreateReportScreen: React.FC = () => {
   const navigation = useNavigation();
   const { getCurrentLocation } = useLocation();
+  const { refreshUnreadCount } = useNotifications();
 
   // Estados del formulario
   const [titulo, setTitulo] = useState('');
@@ -109,12 +108,9 @@ const CreateReportScreen: React.FC = () => {
       const categoriasDisponibles = await categoriaService.getCategorias();
       
       const categoriasUI: CategoriaOption[] = categoriasDisponibles.map(cat => ({
-        id: cat.id, // Usar el UUID real
+        id: cat.id,
         nombre: cat.nombre,
-        icono: cat.icono || '📋', // Usar icono de la BD o por defecto
-        color: cat.color || designSystem.COLORS.primary[500], // Usar color de la BD o por defecto
         descripcion: cat.descripcion || '',
-        emoji: cat.emoji, // Incluir emoji si está disponible
       }));
       
       setCategorias(categoriasUI);
@@ -213,6 +209,10 @@ const CreateReportScreen: React.FC = () => {
       showSnackbar('La ubicación es obligatoria');
       return false;
     }
+    if (!imagen) {
+      showSnackbar('Debes tomar al menos una fotografía del problema');
+      return false;
+    }
     return true;
   };
 
@@ -238,12 +238,15 @@ const CreateReportScreen: React.FC = () => {
 
       await reporteService.crearReporte(nuevoReporte);
       
+      // Actualizar el contador de notificaciones inmediatamente
+      await refreshUnreadCount();
+      
       Alert.alert(
-        '✅ Éxito',
-        'Tu reporte ha sido enviado correctamente',
+        '✅ Reporte enviado',
+        'Tu reporte ha sido enviado correctamente. En unos minutos será revisado y validado por nuestro equipo antes de aparecer en el mapa.',
         [
           {
-            text: 'OK',
+            text: 'Entendido',
             onPress: () => {
               limpiarFormulario();
               navigation.goBack();
@@ -341,9 +344,6 @@ const CreateReportScreen: React.FC = () => {
                       ]}
                       onPress={() => setCategoriaSeleccionada(categoria.id)}
                     >
-                      <Text style={styles.categoriaIcono}>
-                        {categoria.emoji || categoria.icono}
-                      </Text>
                       <Text
                         style={[
                           styles.categoriaNombre,
@@ -473,15 +473,15 @@ const CreateReportScreen: React.FC = () => {
                     </Text>
                     <View style={styles.botonesUbicacion}>
                       <Button
-                        title="🗺️ Seleccionar en Mapa"
+                        title="Seleccionar en Mapa"
                         variant="outlined"
                         color="primary"
                         onPress={() => setMostrarMapaSelector(true)}
                         style={styles.botonUbicacion}
                       />
                       <Button
-                        title="📍 Mi Ubicación"
-                        variant="text"
+                        title="Mi Ubicación"
+                        variant="filled"
                         color="primary"
                         onPress={obtenerUbicacionActual}
                         style={styles.botonUbicacion}
@@ -495,15 +495,15 @@ const CreateReportScreen: React.FC = () => {
                     </Text>
                     <View style={styles.botonesUbicacion}>
                       <Button
-                        title="🗺️ Seleccionar en Mapa"
+                        title="Seleccionar en Mapa"
                         variant="outlined"
                         color="primary"
                         onPress={() => setMostrarMapaSelector(true)}
                         style={styles.botonUbicacion}
                       />
                       <Button
-                        title="📍 Obtener Mi Ubicación"
-                        variant="outlined"
+                        title="Obtener Mi Ubicación"
+                        variant="filled"
                         color="primary"
                         onPress={obtenerUbicacionActual}
                         style={styles.botonUbicacion}
@@ -519,7 +519,7 @@ const CreateReportScreen: React.FC = () => {
         {/* Botón de envío */}
         <View style={styles.section}>
           <Button
-            title={enviando ? "Enviando..." : "📤 Enviar Reporte"}
+            title={enviando ? "Enviando..." : "Enviar Reporte"}
             variant="filled"
             color="primary"
             onPress={enviarReporte}

@@ -86,10 +86,7 @@ const MapScreen: React.FC = () => {
         id: cat.id,
         nombre: cat.nombre,
         descripcion: cat.descripcion || '',
-        icono: cat.icono,
-        color: cat.color,
         activa: true,
-        orden: cat.id,
       }));
       
       setCategorias(categoriasUI);
@@ -97,11 +94,11 @@ const MapScreen: React.FC = () => {
       console.error('❌ Error cargando categorías:', error);
       // Fallback a categorías por defecto si falla
       setCategorias([
-        { id: 1, nombre: 'Infraestructura', descripcion: '', icono: 'build', color: '#FF5722', activa: true, orden: 1 },
-        { id: 2, nombre: 'Seguridad', descripcion: '', icono: 'security', color: '#F44336', activa: true, orden: 2 },
-        { id: 3, nombre: 'Servicios Públicos', descripcion: '', icono: 'water-drop', color: '#2196F3', activa: true, orden: 3 },
-        { id: 4, nombre: 'Transporte', descripcion: '', icono: 'directions-bus', color: '#4CAF50', activa: true, orden: 4 },
-        { id: 5, nombre: 'Medio Ambiente', descripcion: '', icono: 'eco', color: '#8BC34A', activa: true, orden: 5 },
+        { id: '1', nombre: 'Infraestructura', descripcion: '', activa: true },
+        { id: '2', nombre: 'Seguridad', descripcion: '', activa: true },
+        { id: '3', nombre: 'Servicios Públicos', descripcion: '', activa: true },
+        { id: '4', nombre: 'Transporte', descripcion: '', activa: true },
+        { id: '5', nombre: 'Medio Ambiente', descripcion: '', activa: true },
       ]);
     } finally {
       setLoadingCategorias(false);
@@ -115,8 +112,8 @@ const MapScreen: React.FC = () => {
     try {
       setLoading(true);
       
-      console.log('🗺️ [MapScreen] Cargando reportes...');
-      const reportes = await reporteService.getReportes();
+      console.log('🗺️ [MapScreen] Cargando reportes validados para el mapa...');
+      const reportes = await reporteService.getReportesParaMapa();
       console.log('📥 [MapScreen] Reportes recibidos del backend:', reportes);
 
       if (reportes && reportes.length > 0) {
@@ -127,23 +124,24 @@ const MapScreen: React.FC = () => {
           categoria_id: rep.categoria_id,
           zona_id: rep.zona_id || 1,
           titulo: rep.titulo,
-          descripcion: rep.descripcion,
+          descripcion: rep.descripcion || '',
           ubicacion: {
-            latitude: rep.ubicacion.latitude,
-            longitude: rep.ubicacion.longitude,
+            // El endpoint /mapa devuelve coordenadas directamente
+            latitude: rep.coordenadas?.latitude || rep.ubicacion?.latitude,
+            longitude: rep.coordenadas?.longitude || rep.ubicacion?.longitude,
           },
-          direccion: rep.direccion,
+          direccion: rep.direccion || '',
           estado: rep.estado,
           prioridad: rep.prioridad,
           fecha_creacion: new Date(rep.fecha_creacion),
-          fecha_actualizacion: new Date(rep.fecha_actualizacion),
+          fecha_actualizacion: rep.fecha_actualizacion ? new Date(rep.fecha_actualizacion) : new Date(rep.fecha_creacion),
           imagenes: rep.imagenes || [],
           likes: rep.likes || 0,
           dislikes: rep.dislikes || 0,
           validaciones: rep.validaciones || 0,
           comentarios_count: rep.comentarios_count || 0,
           usuario: rep.usuario || { id: 0, nombre: 'Usuario Anónimo', email: '' },
-          categoria: categorias.find(cat => cat.id === rep.categoria_id) || categorias[0],
+          categoria: rep.categoria || categorias.find(cat => cat.id === rep.categoria_id) || categorias[0],
           zona: { id: 1, nombre: 'Zona General', tipo: 'barrio', coordenadas: [], activa: true },
         }));
 
@@ -165,27 +163,41 @@ const MapScreen: React.FC = () => {
   /**
    * Obtener ubicación del usuario
    */
-  const getUserLocation = async () => {
+  const getUserLocation = async (showDialog = false) => {
     try {
-      if (hasLocationPermissions()) {
-        const location = await getCurrentLocation();
-        if (location) {
-          setUserLocation({
-            latitude: location.latitude,
-            longitude: location.longitude,
-          });
-          
-          // Centrar mapa en la ubicación del usuario
+      console.log('📍 Solicitando ubicación del usuario...');
+      
+      const location = await getCurrentLocation({ showDialog });
+      
+      if (location) {
+        console.log('✅ Ubicación obtenida:', location);
+        setUserLocation({
+          latitude: location.latitude,
+          longitude: location.longitude,
+        });
+        
+        // Centrar mapa en la ubicación del usuario
+        setRegion({
+          latitude: location.latitude,
+          longitude: location.longitude,
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
+        });
+      } else {
+        console.log('⚠️ No se pudo obtener la ubicación');
+        // Si hay reportes y no es una solicitud manual, centrar en el primer reporte
+        if (reports.length > 0 && !showDialog) {
+          const firstReport = reports[0];
           setRegion({
-            latitude: location.latitude,
-            longitude: location.longitude,
-            latitudeDelta: 0.01,
-            longitudeDelta: 0.01,
+            latitude: firstReport.ubicacion.latitude,
+            longitude: firstReport.ubicacion.longitude,
+            latitudeDelta: 0.05,
+            longitudeDelta: 0.05,
           });
         }
       }
     } catch (error) {
-      console.log('⚠️ No se pudo obtener la ubicación del usuario');
+      console.error('❌ Error obteniendo ubicación del usuario:', error);
     }
   };
 
@@ -320,7 +332,7 @@ const MapScreen: React.FC = () => {
           
           <TouchableOpacity
             style={styles.controlButton}
-            onPress={getUserLocation}
+            onPress={() => getUserLocation(true)}
           >
             <Text style={styles.controlIcon}>🎯</Text>
           </TouchableOpacity>

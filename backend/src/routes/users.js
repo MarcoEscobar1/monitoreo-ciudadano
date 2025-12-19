@@ -16,8 +16,11 @@ router.get('/profile', authenticateToken, async (req, res) => {
       SELECT 
         u.id,
         u.nombre,
+        u.apellidos,
         u.email,
         u.telefono,
+        u.direccion,
+        u.avatar_url,
         u.fecha_registro,
         u.activo,
         u.tipo_usuario,
@@ -26,7 +29,7 @@ router.get('/profile', authenticateToken, async (req, res) => {
       FROM monitoreo_ciudadano.usuarios u
       LEFT JOIN monitoreo_ciudadano.reportes r ON u.id = r.usuario_id
       WHERE u.id = $1 AND u.activo = true
-      GROUP BY u.id, u.nombre, u.email, u.telefono, u.fecha_registro, u.activo, u.tipo_usuario
+      GROUP BY u.id, u.nombre, u.apellidos, u.email, u.telefono, u.direccion, u.avatar_url, u.fecha_registro, u.activo, u.tipo_usuario
     `, [userId]);
 
     if (result.rows.length === 0) {
@@ -40,11 +43,15 @@ router.get('/profile', authenticateToken, async (req, res) => {
     const usuario = {
       id: row.id,
       nombre: row.nombre,
+      apellidos: row.apellidos,
       email: row.email,
       telefono: row.telefono,
+      direccion: row.direccion,
+      avatar_url: row.avatar_url,
       fecha_registro: row.fecha_registro,
       activo: row.activo,
       role: row.tipo_usuario?.toLowerCase() || 'user',
+      tipo_usuario: row.tipo_usuario,
       configuracion_notificaciones: {
         push_reportes_cercanos: true,
         push_actualizaciones: true,
@@ -165,24 +172,72 @@ router.get('/reports', authenticateToken, async (req, res) => {
 router.put('/profile', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.userId;
-    const { nombre, telefono } = req.body;
+    console.log('🔍 req.body completo:', JSON.stringify(req.body, null, 2));
+    console.log('🆔 userId:', userId);
+    
+    const { nombre, apellidos, telefono, direccion, avatar_url } = req.body;
+    console.log('📝 Datos extraídos:', { nombre, apellidos, telefono, direccion, avatar_url });
+    console.log('📝 Tipos:', { 
+      nombre: typeof nombre, 
+      apellidos: typeof apellidos, 
+      telefono: typeof telefono, 
+      direccion: typeof direccion 
+    });
 
-    if (!nombre) {
+    if (!nombre || nombre.trim().length < 2) {
       return res.status(400).json({
         success: false,
-        message: 'El nombre es requerido'
+        message: 'El nombre es requerido y debe tener al menos 2 caracteres'
       });
     }
 
+    // Validar formato de teléfono si se proporciona (8 dígitos para Bolivia)
+    if (telefono && !/^[0-9]{8}$/.test(telefono)) {
+      return res.status(400).json({
+        success: false,
+        message: 'El teléfono debe tener 8 dígitos'
+      });
+    }
+
+    // Preparar parámetros, convirtiendo strings vacías a null
+    const apellidosTrimmed = apellidos?.trim();
+    const telefonoTrimmed = telefono?.trim();
+    const direccionTrimmed = direccion?.trim();
+    
+    const params = [
+      nombre.trim(), 
+      apellidosTrimmed && apellidosTrimmed.length > 0 ? apellidosTrimmed : null,
+      telefonoTrimmed && telefonoTrimmed.length > 0 ? telefonoTrimmed : null,
+      direccionTrimmed && direccionTrimmed.length > 0 ? direccionTrimmed : null,
+      avatar_url || null,
+      userId
+    ];
+    
+    console.log('💾 Parámetros finales para UPDATE:', params);
+
     await query(`
       UPDATE monitoreo_ciudadano.usuarios 
-      SET nombre = $1, telefono = $2, fecha_actualizacion = CURRENT_TIMESTAMP
-      WHERE id = $3
-    `, [nombre, telefono || null, userId]);
+      SET 
+        nombre = $1, 
+        apellidos = $2,
+        telefono = $3, 
+        direccion = $4,
+        avatar_url = $5,
+        fecha_actualizacion = CURRENT_TIMESTAMP
+      WHERE id = $6
+    `, params);
+
+    // Obtener datos actualizados
+    const result = await query(`
+      SELECT id, nombre, apellidos, email, telefono, direccion, avatar_url, tipo_usuario
+      FROM monitoreo_ciudadano.usuarios
+      WHERE id = $1
+    `, [userId]);
 
     res.json({
       success: true,
-      message: 'Perfil actualizado exitosamente'
+      message: 'Perfil actualizado exitosamente',
+      data: result.rows[0]
     });
 
   } catch (error) {

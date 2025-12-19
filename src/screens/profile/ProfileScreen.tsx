@@ -6,7 +6,6 @@ import { AnimatedEntrance } from '../../components/animated/AnimatedEntrance';
 import { Card, CardHeader, CardContent, StatCard } from '../../components/cards/Card';
 import { Button } from '../../components/buttons/Button';
 import { ProfileAvatar } from '../../components/avatar/ProfileAvatar';
-import { ProfileStats } from '../../components/profile/ProfileStats';
 import { useAuth } from '../../context/AuthContext';
 
 const ProfileScreen: React.FC = () => {
@@ -15,23 +14,18 @@ const ProfileScreen: React.FC = () => {
   
   // Datos del usuario desde el contexto de autenticación
   const userData = {
-    fullName: user?.nombre || 'Usuario',
+    fullName: user?.nombre && user?.apellidos 
+      ? `${user.nombre} ${user.apellidos}`
+      : user?.nombre || 'Usuario',
     email: user?.email || 'email@ejemplo.com',
     phone: user?.telefono || 'No especificado',
-    address: 'Dirección no configurada', // TODO: Agregar campo de dirección al usuario
+    address: user?.direccion || 'Dirección no configurada',
     avatar: user?.avatar_url, // URL de la imagen de perfil
   };
 
-  const userStats = [
-    { label: 'Reportes creados', value: user?.total_reportes || 0, icon: 'document-text' },
-    { label: 'Reportes resueltos', value: user?.reportes_validados || 0, icon: 'checkmark-circle' },
-    { label: 'Validaciones', value: 0, icon: 'thumbs-up' }, // TODO: Agregar campo de validaciones
-    { label: 'Likes recibidos', value: 0, icon: 'heart' }, // TODO: Agregar campo de likes
-  ];
-
   const handleLogout = () => {
     Alert.alert(
-      '🚪 Cerrar sesión',
+      'Cerrar sesión',
       '¿Estás seguro de que quieres cerrar tu sesión?',
       [
         {
@@ -86,21 +80,17 @@ const ProfileScreen: React.FC = () => {
 
       <View style={styles.content}>
         <AnimatedEntrance type="fadeIn">
-          <Card style={styles.sectionCard}>
-            <CardHeader title="Estadísticas" />
-            <CardContent>
-              <ProfileStats stats={userStats} />
-            </CardContent>
-          </Card>
-        </AnimatedEntrance>
-
-        <AnimatedEntrance type="fadeIn">
           <View style={styles.actionButtons}>
-            <Button
-              variant="outlined"
-              title="🚪 Cerrar sesión"
+            <Button              variant="filled"
+              title="Editar perfil"
+              onPress={() => navigation.navigate('EditProfile' as never)}
+              style={styles.editButton}
+            />
+            <Button              variant="outlined"
+              title="Cerrar sesión"
               onPress={handleLogout}
               style={styles.logoutButton}
+              textStyle={styles.logoutButtonText}
             />
           </View>
         </AnimatedEntrance>
@@ -177,10 +167,17 @@ const styles = StyleSheet.create({
   actionButtons: {
     marginTop: DESIGN_SYSTEM.SPACING.lg,
     marginBottom: DESIGN_SYSTEM.SPACING['2xl'],
+    gap: DESIGN_SYSTEM.SPACING.base,
+  },
+  editButton: {
+    marginBottom: DESIGN_SYSTEM.SPACING.sm,
   },
   logoutButton: {
     borderColor: DESIGN_SYSTEM.COLORS.error[500],
     borderWidth: 2,
+  },
+  logoutButtonText: {
+    color: DESIGN_SYSTEM.COLORS.error[500],
   },
 });
 

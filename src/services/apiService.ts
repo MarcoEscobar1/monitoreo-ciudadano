@@ -2,9 +2,36 @@
 // Conecta React Native con el servidor Express/PostgreSQL
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
+import { API_CONFIG } from '../constants';
+import * as Device from 'expo-device';
+
+// Detectar si estamos en emulador Android y ajustar IP
+const getApiBaseUrl = () => {
+  if (!__DEV__) {
+    return 'https://tu-api-produccion.com/api';
+  }
+  
+  const envUrl = process.env.EXPO_PUBLIC_API_URL || API_CONFIG.baseUrl;
+  
+  // Si es Android y estamos en emulador, usar 10.0.2.2 en lugar de localhost o 192.168.x.x
+  if (Platform.OS === 'android' && !Device.isDevice) {
+    console.log('📱 Emulador Android detectado, usando 10.0.2.2');
+    return envUrl.replace('localhost', '10.0.2.2').replace(/192\.168\.\d+\.\d+/, '10.0.2.2');
+  }
+  
+  console.log('📱 Dispositivo físico o iOS, usando URL configurada:', envUrl);
+  return envUrl;
+};
 
 // Configuración del API
-const API_BASE_URL = __DEV__ ? 'http://192.168.100.10:3001/api' : 'https://tu-api-produccion.com/api';
+const API_BASE_URL = getApiBaseUrl();
+
+// Log de la configuración al iniciar
+console.log('🔧 API Service inicializado');
+console.log('🌐 URL Base del API:', API_BASE_URL);
+console.log('📱 Platform:', Platform.OS);
+console.log('📱 Es dispositivo físico:', Device.isDevice);
 
 // Función para obtener token de autenticación
 const getAuthToken = async (): Promise<string | null> => {
@@ -23,6 +50,8 @@ const makeRequest = async (
 ): Promise<any> => {
   try {
     const url = `${API_BASE_URL}${endpoint}`;
+    console.log('🌐 Intentando conectar a:', url);
+    
     const token = await getAuthToken();
     
     const headers: Record<string, string> = {
@@ -35,10 +64,14 @@ const makeRequest = async (
       headers['Authorization'] = `Bearer ${token}`;
     }
 
+    console.log('📤 Enviando petición:', { url, method: options.method || 'GET' });
+
     const response = await fetch(url, {
       ...options,
       headers,
     });
+
+    console.log('📥 Respuesta recibida:', response.status, response.statusText);
 
     const data = await response.json();
 
@@ -49,6 +82,8 @@ const makeRequest = async (
     return data;
   } catch (error) {
     console.error('❌ Error en petición API:', error);
+    console.error('📍 URL que falló:', `${API_BASE_URL}${endpoint}`);
+    console.error('🔍 Detalles del error:', error instanceof Error ? error.message : 'Error desconocido');
     throw error;
   }
 };
@@ -114,6 +149,7 @@ export const authService = {
   // Registro
   register: async (userData: {
     nombre: string;
+    apellidos?: string;
     email: string;
     password: string;
     telefono?: string;
@@ -245,6 +281,25 @@ export const userService = {
     }
   },
 
+  // Actualizar perfil completo (nuevo)
+  updateProfile: async (userData: {
+    nombre: string;
+    apellidos?: string | null;
+    telefono?: string | null;
+    direccion?: string | null;
+    avatar_url?: string | null;
+  }) => {
+    try {
+      return await makeRequest('/users/profile', {
+        method: 'PUT',
+        body: JSON.stringify(userData),
+      });
+    } catch (error) {
+      console.error('Error actualizando perfil:', error);
+      throw error;
+    }
+  },
+
   // Obtener reportes del usuario
   getMyReports: async (filters?: any) => {
     try {
@@ -319,6 +374,28 @@ export const reportService = {
       console.error('Error actualizando estado:', error);
       throw error;
     }
+  },
+
+  // Obtener reportes del usuario autenticado
+  getMy: async () => {
+    try {
+      const response = await makeRequest('/reports/my');
+      return response;
+    } catch (error) {
+      console.error('Error obteniendo mis reportes:', error);
+      return { success: false, data: [] };
+    }
+  },
+
+  // Obtener detalle de un reporte por ID
+  getById: async (id: string) => {
+    try {
+      const response = await makeRequest(`/reports/${id}`);
+      return response;
+    } catch (error) {
+      console.error('Error obteniendo reporte:', error);
+      throw error;
+    }
   }
 };
 
@@ -391,10 +468,75 @@ export const transaction = async (callback: (client: any) => Promise<any>) => {
   return await callback(null);
 };
 
-export default {
+// Métodos HTTP genéricos para servicios
+export const httpClient = {
+  get: async (endpoint: string) => {
+    return makeRequest(endpoint, { method: 'GET' });
+  },
+  
+  post: async (endpoint: string, data?: any) => {
+    return makeRequest(endpoint, { 
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+  },
+  
+  patch: async (endpoint: string, data?: any) => {
+    return makeRequest(endpoint, { 
+      method: 'PATCH',
+      body: JSON.stringify(data)
+    });
+  },
+  
+  put: async (endpoint: string, data?: any) => {
+    return makeRequest(endpoint, { 
+      method: 'PUT',
+      body: JSON.stringify(data)
+    });
+  },
+  
+  delete: async (endpoint: string) => {
+    return makeRequest(endpoint, { method: 'DELETE' });
+  }
+};
+
+// Actualizar servicio de notificaciones existente
+export const notificationServiceUpdated = {
+  ...notificationService,
+  
+  // Obtener notificaciones del usuario (nuevo método)
+  getNotifications: async (params?: { limite?: number; pagina?: number }) => {
+    try {
+      const queryParams = new URLSearchParams();
+      if (params?.limite) queryParams.append('limite', params.limite.toString());
+      if (params?.pagina) queryParams.append('pagina', params.pagina.toString());
+      
+      const queryString = queryParams.toString();
+      const endpoint = queryString ? `/notifications?${queryString}` : '/notifications';
+      
+      return await makeRequest(endpoint, { method: 'GET' });
+    } catch (error) {
+      console.error('Error obteniendo notificaciones:', error);
+      throw error;
+    }
+  },
+};
+
+// API Service con métodos HTTP
+const apiService = {
   query,
   testConnection,
   transaction,
-  userService,
+  users: userService,
+  userService, // Mantener para compatibilidad
   reportService,
+  notifications: notificationServiceUpdated,
+  get: httpClient.get,
+  post: httpClient.post,
+  patch: httpClient.patch,
+  put: httpClient.put,
+  delete: httpClient.delete,
 };
+
+export default apiService;
+export { authService, userService, reportService, notificationService, notificationServiceUpdated };
