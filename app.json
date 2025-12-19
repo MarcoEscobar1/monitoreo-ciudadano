@@ -39,8 +39,11 @@
         "ACCESS_FINE_LOCATION",
         "CAMERA",
         "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE"
-      ]
+        "WRITE_EXTERNAL_STORAGE",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ],
+      "package": "com.marcoescobar27.monitoreociudadano"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -58,6 +61,11 @@
       ],
       "expo-secure-store",
       "expo-web-browser"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "8702bc49-ca8d-4fe4-a730-93496ab39f76"
+      }
+    }
   }
 }
