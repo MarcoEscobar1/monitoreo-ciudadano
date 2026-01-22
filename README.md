@@ -18,13 +18,13 @@ Monitoreo Ciudadano es una aplicacion movil que permite a los ciudadanos reporta
 
 **Registro y Autenticacion**
 - Crear cuenta con email y contrasena
-- Iniciar sesion con credenciales o Google
+- Iniciar sesion con credenciales
 - Recuperar contrasena por email
 - Editar perfil personal
 
 **Crear Reportes**
 - Formulario para describir el problema (titulo y descripcion)
-- Seleccionar categoria del problema (Infraestructura, Seguridad, Medio Ambiente, Transporte, Servicios Publicos, Salud)
+- Seleccionar categoria del problema 
 - Definir nivel de prioridad (Baja, Media, Alta)
 - Capturar o seleccionar fotografias del problema
 - Obtener ubicacion automatica o seleccionar manualmente en el mapa
@@ -35,7 +35,7 @@ Monitoreo Ciudadano es una aplicacion movil que permite a los ciudadanos reporta
 - Filtrar reportes por categoria y estado
 - Ver detalle completo de cada reporte
 - Consultar mis reportes creados
-- Seguimiento del estado de mis reportes (Pendiente, En Revision, En Proceso, Resuelto, Rechazado)
+- Seguimiento del estado de mis reportes
 
 **Notificaciones**
 - Recibir notificaciones cuando un reporte cambia de estado
@@ -74,33 +74,9 @@ Monitoreo Ciudadano es una aplicacion movil que permite a los ciudadanos reporta
 
 - Visualizacion de reportes geolocalizados en mapa OpenStreetMap
 - Agrupacion automatica de reportes cercanos (clustering)
-- Marcadores con colores segun categoria
 - Filtros para mostrar reportes por categoria o estado
 - Vista de detalle al seleccionar un marcador
 - Selector de ubicacion para nuevos reportes
-
----
-
-## Estados de un Reporte
-
-| Estado | Descripcion |
-|--------|-------------|
-| Pendiente | Reporte creado, esperando validacion del administrador |
-| En Revision | Reporte validado, siendo analizado por las autoridades |
-| En Proceso | Se esta trabajando en la solucion del problema |
-| Resuelto | El problema fue solucionado |
-| Rechazado | El reporte no cumple con los criterios o es invalido |
-
----
-
-## Categorias de Problemas
-
-- Infraestructura: Problemas en calles, aceras, puentes, edificios publicos
-- Transporte: Semaforos, senalizacion, transporte publico
-- Medio Ambiente: Contaminacion, basuras, espacios verdes
-- Seguridad: Alumbrado publico, zonas inseguras
-- Servicios Publicos: Agua, luz, gas, recoleccion de basuras
-- Salud: Servicios de salud publica, centros de salud
 
 ---
 
@@ -110,10 +86,4 @@ Monitoreo Ciudadano es una aplicacion movil que permite a los ciudadanos reporta
 - Backend: Node.js con Express
 - Base de Datos: PostgreSQL con PostGIS
 - Mapas: OpenStreetMap con Leaflet
-- Autenticacion: JWT y Google OAuth
-
----
-
-## Autor
-
-Desarrollado como proyecto de grado.
+- Autenticacion: JWT
