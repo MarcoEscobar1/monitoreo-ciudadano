@@ -23,11 +23,6 @@ import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
 import HomeScreen from '../screens/home/HomeScreen';
 import MapScreen from '../screens/map/MapScreen';
 import LocationSelectionScreen from '../screens/map/LocationSelectionScreen';
-import LocationTestScreen from '../screens/test/LocationTestScreen';
-import OpenStreetMapTestScreen from '../screens/test/OpenStreetMapTestScreen';
-import SimpleMapTest from '../screens/test/SimpleMapTest';
-import OSMMapTest from '../screens/test/OSMMapTest';
-import WebMapTest from '../screens/test/WebMapTest';
 import CreateReportScreen from '../screens/reports/CreateReportScreen-fixed';
 import NotificationsScreen from '../screens/notifications/NotificationsScreen';
 import ProfileScreen from '../screens/profile/ProfileScreen';
@@ -93,7 +88,6 @@ const getTabBarIcon = (routeName: keyof MainTabParamList, focused: boolean, size
 
   // Agregar badge solo para notificaciones
   if (routeName === 'Notifications' && unreadCount && unreadCount > 0) {
-    console.log('🔴 Renderizando badge con contador:', unreadCount);
     return (
       <View style={{ position: 'relative' }}>
         {icon}
@@ -148,7 +142,6 @@ const getAdminTabBarIcon = (
 
   // Agregar badge si hay items pendientes
   if (badgeCount > 0) {
-    console.log(`🔴 Renderizando badge admin en ${routeName}:`, badgeCount);
     return (
       <View style={{ position: 'relative' }}>
         {icon}
@@ -215,31 +208,6 @@ const MapStackNavigator = () => (
       options={{ title: 'Seleccionar Ubicación' }}
     />
     <MapStack.Screen 
-      name="LocationTest" 
-      component={LocationTestScreen}
-      options={{ title: 'Prueba de Ubicación' }}
-    />
-    <MapStack.Screen 
-      name="OpenStreetMapTest" 
-      component={OpenStreetMapTestScreen}
-      options={{ title: 'Prueba OpenStreetMap' }}
-    />
-    <MapStack.Screen 
-      name="SimpleMapTest" 
-      component={SimpleMapTest}
-      options={{ title: 'Mapa Simple' }}
-    />
-    <MapStack.Screen 
-      name="OSMMapTest" 
-      component={OSMMapTest}
-      options={{ title: 'Mapa OSM con Tiles' }}
-    />
-    <MapStack.Screen 
-      name="WebMapTest" 
-      component={WebMapTest}
-      options={{ title: 'Mapa Web Leaflet' }}
-    />
-    <MapStack.Screen 
       name="ReportDetail" 
       component={ReportDetailScreen}
       options={{ 
@@ -280,8 +248,6 @@ const ProfileStackNavigator = () => (
 const MainTabNavigator = () => {
   const insets = useSafeAreaInsets();
   const { unreadCount } = useNotifications();
-  
-  console.log('📱 MainTabNavigator renderizado con unreadCount:', unreadCount);
   
   return (
     <MainTabs.Navigator
@@ -348,11 +314,6 @@ const MainTabNavigator = () => {
 const AdminTabNavigator = () => {
   const insets = useSafeAreaInsets();
   const { pendingReportsCount, pendingUsersCount } = useAdminBadges();
-  
-  console.log('👮 AdminTabNavigator renderizado con contadores:', {
-    reportes: pendingReportsCount,
-    usuarios: pendingUsersCount
-  });
   
   return (
     <AdminTabs.Navigator

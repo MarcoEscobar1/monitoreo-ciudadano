@@ -77,7 +77,7 @@ class AdminService {
       const response = await api.get('/admin/reports/pending');
       return response.data || [];
     } catch (error: any) {
-      console.error('❌ Error obteniendo reportes pendientes:', error);
+      console.error('Error obteniendo reportes pendientes:', error);
       throw new Error(error.message || 'Error obteniendo reportes pendientes');
     }
   }
@@ -85,11 +85,9 @@ class AdminService {
   async getReportsStats(): Promise<AdminStats> {
     try {
       const response = await api.get('/admin/reports/stats');
-      console.log('📊 AdminService.getReportsStats - Respuesta completa:', JSON.stringify(response));
-      console.log('📊 AdminService.getReportsStats - response.data:', JSON.stringify(response.data));
       return response.data;
     } catch (error: any) {
-      console.error('❌ Error obteniendo estadísticas:', error);
+      console.error('Error obteniendo estadísticas:', error);
       throw new Error(error.message || 'Error obteniendo estadísticas');
     }
   }
@@ -98,7 +96,7 @@ class AdminService {
     try {
       await api.post(`/admin/reports/${reportId}/validate`, { comentarios });
     } catch (error: any) {
-      console.error('❌ Error validando reporte:', error);
+      console.error('Error validando reporte:', error);
       throw new Error(error.message || 'Error validando reporte');
     }
   }
@@ -110,7 +108,7 @@ class AdminService {
       }
       await api.post(`/admin/reports/${reportId}/reject`, { motivo });
     } catch (error: any) {
-      console.error('❌ Error rechazando reporte:', error);
+      console.error('Error rechazando reporte:', error);
       throw new Error(error.message || 'Error rechazando reporte');
     }
   }
@@ -123,7 +121,7 @@ class AdminService {
     try {
       await api.patch(`/admin/reports/${reportId}/status`, { estado, comentarios });
     } catch (error: any) {
-      console.error('❌ Error actualizando estado:', error);
+      console.error('Error actualizando estado:', error);
       throw new Error(error.message || 'Error actualizando estado');
     }
   }
@@ -151,7 +149,7 @@ class AdminService {
       const response = await api.get(`/admin/users?${queryParams.toString()}`);
       return response;
     } catch (error: any) {
-      console.error('❌ Error obteniendo usuarios:', error);
+      console.error('Error obteniendo usuarios:', error);
       throw new Error(error.message || 'Error obteniendo usuarios');
     }
   }
@@ -160,7 +158,7 @@ class AdminService {
     try {
       await api.patch(`/admin/users/${userId}/status`, { activo });
     } catch (error: any) {
-      console.error('❌ Error actualizando usuario:', error);
+      console.error('Error actualizando usuario:', error);
       throw new Error(error.message || 'Error actualizando usuario');
     }
   }
@@ -174,7 +172,7 @@ class AdminService {
       const response = await api.get('/admin/categories');
       return response.data || [];
     } catch (error: any) {
-      console.error('❌ Error obteniendo categorías:', error);
+      console.error('Error obteniendo categorías:', error);
       throw new Error(error.message || 'Error obteniendo categorías');
     }
   }
@@ -191,7 +189,7 @@ class AdminService {
       const response = await api.post('/admin/categories', data);
       return response.data;
     } catch (error: any) {
-      console.error('❌ Error creando categoría:', error);
+      console.error('Error creando categoría:', error);
       throw new Error(error.message || 'Error creando categoría');
     }
   }
@@ -208,7 +206,7 @@ class AdminService {
       const response = await api.put(`/admin/categories/${categoryId}`, data);
       return response.data;
     } catch (error: any) {
-      console.error('❌ Error actualizando categoría:', error);
+      console.error('Error actualizando categoría:', error);
       throw new Error(error.message || 'Error actualizando categoría');
     }
   }
@@ -218,7 +216,7 @@ class AdminService {
       const response = await api.get('/admin/reports/by-category');
       return response.data || [];
     } catch (error: any) {
-      console.error('❌ Error obteniendo reportes por categoría:', error);
+      console.error('Error obteniendo reportes por categoría:', error);
       throw new Error(error.message || 'Error obteniendo reportes por categoría');
     }
   }
@@ -232,7 +230,7 @@ class AdminService {
       const response = await api.get('/admin/users/pending');
       return response.data || [];
     } catch (error: any) {
-      console.error('❌ Error obteniendo usuarios pendientes:', error);
+      console.error('Error obteniendo usuarios pendientes:', error);
       throw new Error(error.message || 'Error obteniendo usuarios pendientes');
     }
   }
@@ -241,7 +239,7 @@ class AdminService {
     try {
       await api.post(`/admin/users/${userId}/validate`, { comentarios });
     } catch (error: any) {
-      console.error('❌ Error validando usuario:', error);
+      console.error('Error validando usuario:', error);
       throw new Error(error.message || 'Error validando usuario');
     }
   }
@@ -253,7 +251,7 @@ class AdminService {
       }
       await api.post(`/admin/users/${userId}/reject`, { motivo });
     } catch (error: any) {
-      console.error('❌ Error rechazando usuario:', error);
+      console.error('Error rechazando usuario:', error);
       throw new Error(error.message || 'Error rechazando usuario');
     }
   }

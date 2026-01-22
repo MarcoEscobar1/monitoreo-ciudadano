@@ -72,7 +72,7 @@ class LocationServiceImpl implements LocationService {
         status
       };
     } catch (error) {
-      console.error('❌ Error solicitando permisos de ubicación:', error);
+      console.error('Error solicitando permisos de ubicación:', error);
       return {
         granted: false,
         canAskAgain: false,
@@ -127,26 +127,23 @@ class LocationServiceImpl implements LocationService {
           ubicacionCompleta.postalCode = address.postalCode || undefined;
         }
       } catch (geocodeError) {
-        console.log('⚠️ No se pudo obtener la dirección:', geocodeError);
+        // Geocodificación falló silenciosamente
       }
 
       this.lastKnownLocation = ubicacionCompleta;
-      console.log('✅ Ubicación obtenida:', ubicacionCompleta);
       return ubicacionCompleta;
 
     } catch (error) {
-      console.error('❌ Error obteniendo ubicación:', error);
+      console.error('Error obteniendo ubicación:', error);
       
       // Intentar obtener la última ubicación conocida del sistema
       try {
-        console.log('🔄 Intentando obtener última ubicación conocida...');
         const lastLocation = await Location.getLastKnownPositionAsync({
           maxAge: 300000, // Aceptar ubicaciones de hasta 5 minutos
           requiredAccuracy: 1000, // Aceptar precisión de hasta 1km
         });
         
         if (lastLocation) {
-          console.log('✅ Usando última ubicación conocida:', lastLocation.coords);
           const ubicacionCompleta: UbicacionCompleta = {
             latitude: lastLocation.coords.latitude,
             longitude: lastLocation.coords.longitude,
@@ -155,7 +152,7 @@ class LocationServiceImpl implements LocationService {
           return ubicacionCompleta;
         }
       } catch (lastLocError) {
-        console.log('⚠️ No hay última ubicación conocida disponible');
+        // No hay última ubicación conocida disponible
       }
       
       if (options.showDialog) {
@@ -202,7 +199,7 @@ class LocationServiceImpl implements LocationService {
 
       return subscription;
     } catch (error) {
-      console.error('❌ Error monitoreando ubicación:', error);
+      console.error('Error monitoreando ubicación:', error);
       return null;
     }
   }
@@ -212,11 +209,10 @@ class LocationServiceImpl implements LocationService {
    */
   async reverseGeocode(coordinate: Coordenada): Promise<UbicacionCompleta | null> {
     try {
-      console.log('🌍 Usando OpenStreetMap para geocodificación inversa');
       const result = await OpenStreetMapService.reverseGeocode(coordinate);
       return result;
     } catch (error) {
-      console.error('❌ Error en geocodificación inversa:', error);
+      console.error('Error en geocodificacion inversa:', error);
       return {
         ...coordinate,
         address: `${coordinate.latitude.toFixed(6)}, ${coordinate.longitude.toFixed(6)}`,
@@ -229,7 +225,6 @@ class LocationServiceImpl implements LocationService {
    */
   async geocode(address: string): Promise<Coordenada | null> {
     try {
-      console.log('🔍 Usando OpenStreetMap para geocodificación');
       const results = await OpenStreetMapService.geocode(address);
       
       if (results.length > 0) {
@@ -238,7 +233,7 @@ class LocationServiceImpl implements LocationService {
 
       return null;
     } catch (error) {
-      console.error('❌ Error en geocodificación:', error);
+      console.error('Error en geocodificacion:', error);
       return null;
     }
   }

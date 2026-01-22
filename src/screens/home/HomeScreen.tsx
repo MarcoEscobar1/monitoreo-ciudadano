@@ -56,12 +56,8 @@ const HomeScreen: React.FC = () => {
   useFocusEffect(
     useCallback(() => {
       const checkUnreadNotifications = async () => {
-        console.log('🏠 HomeScreen: Verificando notificaciones...');
-        console.log('🏠 Popup ya mostrado:', popupShown);
-
         // Solo mostrar el popup una vez por sesión
         if (popupShown) {
-          console.log('⏭️ Popup ya fue mostrado, saltando...');
           return;
         }
 
@@ -71,13 +67,10 @@ const HomeScreen: React.FC = () => {
           
           // Verificar si el usuario está autenticado
           const token = await SecureStore.getItemAsync('userToken');
-          console.log('🔑 Token existe:', !!token);
           if (!token) return; // No hacer nada si no hay sesión
 
           // Obtener notificaciones del backend
-          console.log('📡 Obteniendo notificaciones del backend...');
           const response = await apiService.notifications.getNotifications();
-          console.log('📬 Respuesta:', response.success, 'Total:', response.data?.length);
           if (!response.success || !response.data) return;
 
           // Obtener notificaciones leídas del AsyncStorage
@@ -85,20 +78,17 @@ const HomeScreen: React.FC = () => {
           const readNotifications = readNotificationsData 
             ? new Set(JSON.parse(readNotificationsData)) 
             : new Set();
-          console.log('📖 Notificaciones leídas:', readNotifications.size);
 
           // Contar notificaciones sin leer
           const unreadCount = response.data.filter(
             (notif: any) => !readNotifications.has(notif.id)
           ).length;
-          console.log('🔢 Notificaciones sin leer:', unreadCount);
 
           // Mostrar popup si hay notificaciones sin leer
           if (unreadCount > 0) {
-            console.log('✅ Mostrando popup de notificaciones...');
             setTimeout(() => {
               Alert.alert(
-                '🔔 Notificaciones pendientes',
+                'Notificaciones pendientes',
                 `Tienes ${unreadCount} notificación${unreadCount > 1 ? 'es' : ''} sin leer`,
                 [
                   { 
@@ -111,14 +101,12 @@ const HomeScreen: React.FC = () => {
               );
             }, 1000);
             setPopupShown(true);
-          } else {
-            console.log('📭 No hay notificaciones sin leer');
           }
         } catch (error) {
           // Silenciar errores de autenticación
           const errorMessage = error instanceof Error ? error.message : String(error);
           if (!errorMessage.includes('Token de acceso requerido')) {
-            console.error('❌ Error verificando notificaciones:', error);
+            console.error('Error verificando notificaciones:', error);
           }
         }
       };

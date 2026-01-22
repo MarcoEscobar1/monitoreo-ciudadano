@@ -52,13 +52,6 @@ const EditProfileScreen: React.FC = () => {
   // Actualizar formData cuando el usuario cambie
   useEffect(() => {
     if (user) {
-      console.log('📝 Datos del usuario cargados:', {
-        nombre: user.nombre,
-        apellidos: user.apellidos,
-        telefono: user.telefono,
-        direccion: user.direccion,
-      });
-      
       setFormData({
         nombre: user.nombre || '',
         apellidos: user.apellidos || '',
@@ -211,14 +204,11 @@ const EditProfileScreen: React.FC = () => {
         direccion: formData.direccion.trim() || null,
         avatar_url: formData.avatar_url || null,
       };
-      console.log('📤 Enviando datos al backend:', dataToSend);
 
       // Llamar al servicio para actualizar perfil
       const response = await apiService.users.updateProfile(dataToSend);
 
       if (response.success && response.data) {
-        console.log('📥 Respuesta del backend:', response.data);
-        
         // Actualizar contexto del usuario con los datos que retorna el backend
         await updateUser({
           ...user,
@@ -275,7 +265,7 @@ const EditProfileScreen: React.FC = () => {
                       </View>
                     )}
                     <View style={styles.cameraIconContainer}>
-                      <Text style={styles.cameraIcon}>📷</Text>
+                      <Text style={styles.cameraIcon}>+</Text>
                     </View>
                   </TouchableOpacity>
                   <Text style={styles.avatarHint}>Toca para cambiar</Text>
@@ -293,14 +283,12 @@ const EditProfileScreen: React.FC = () => {
                   value={formData.nombre}
                   onChangeText={(value: string) => handleInputChange('nombre', value)}
                   error={errors.nombre}
-                  leftIcon="👤"
                 />
 
                 <Input
                   label="Apellidos"
                   value={formData.apellidos}
                   onChangeText={(value: string) => handleInputChange('apellidos', value)}
-                  leftIcon="👤"
                 />
 
                 <Input
@@ -308,7 +296,6 @@ const EditProfileScreen: React.FC = () => {
                   value={formData.telefono}
                   onChangeText={(value: string) => handleInputChange('telefono', value)}
                   error={errors.telefono}
-                  leftIcon="📱"
                   keyboardType="phone-pad"
                   placeholder="12345678 (8 dígitos)"
                   maxLength={8}
@@ -318,7 +305,6 @@ const EditProfileScreen: React.FC = () => {
                   label="Dirección"
                   value={formData.direccion}
                   onChangeText={(value: string) => handleInputChange('direccion', value)}
-                  leftIcon="📍"
                   placeholder="Ej: Av. Arce #123, La Paz"
                   multiline
                   numberOfLines={2}
@@ -411,7 +397,8 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
   },
   cameraIcon: {
-    fontSize: 20,
+    fontSize: 16,
+    color: DESIGN_SYSTEM.COLORS.neutral[600],
   },
   avatarHint: {
     fontSize: DESIGN_SYSTEM.TYPOGRAPHY.fontSizes.sm,

@@ -68,7 +68,7 @@ router.get('/profile', authenticateToken, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error obteniendo perfil:', error);
+    console.error('Error obteniendo perfil:', error);
     res.status(500).json({
       success: false,
       message: 'Error interno del servidor'
@@ -99,15 +99,12 @@ router.get('/reports', authenticateToken, async (req, res) => {
         ST_X(r.ubicacion) as longitude,
         ST_Y(r.ubicacion) as latitude,
         r.direccion,
-        r.votos_positivos as likes,
-        r.votos_negativos as dislikes,
-        cp.nombre as categoria_nombre,
-        cp.icono as categoria_icono,
-        cp.color as categoria_color,
-        (SELECT COUNT(*) FROM monitoreo_ciudadano.comentarios c WHERE c.reporte_id = r.id) as comentarios_count
+        r.votos_ciudadanos as likes,
+        0 as dislikes,
+        cp.nombre as categoria_nombre
       FROM monitoreo_ciudadano.reportes r
       LEFT JOIN monitoreo_ciudadano.categorias_problemas cp ON r.categoria_id = cp.id
-      WHERE r.usuario_id = $1 AND r.activo = true
+      WHERE r.usuario_id = $1
       ORDER BY r.fecha_creacion DESC
       LIMIT $2 OFFSET $3
     `, [userId, parseInt(limite), offset]);
@@ -128,17 +125,15 @@ router.get('/reports', authenticateToken, async (req, res) => {
       likes: row.likes || 0,
       dislikes: row.dislikes || 0,
       validaciones: 0,
-      comentarios_count: parseInt(row.comentarios_count) || 0,
+      comentarios_count: 0,
       categoria: {
-        nombre: row.categoria_nombre,
-        icono: row.categoria_icono,
-        color: row.categoria_color
+        nombre: row.categoria_nombre
       }
     }));
 
     // Contar total
     const countResult = await query(
-      'SELECT COUNT(*) as total FROM monitoreo_ciudadano.reportes WHERE usuario_id = $1 AND activo = true',
+      'SELECT COUNT(*) as total FROM monitoreo_ciudadano.reportes WHERE usuario_id = $1',
       [userId]
     );
     const total = parseInt(countResult.rows[0].total);
@@ -157,7 +152,7 @@ router.get('/reports', authenticateToken, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error obteniendo reportes del usuario:', error);
+    console.error('Error obteniendo reportes del usuario:', error);
     res.status(500).json({
       success: false,
       message: 'Error interno del servidor'
@@ -172,17 +167,8 @@ router.get('/reports', authenticateToken, async (req, res) => {
 router.put('/profile', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.userId;
-    console.log('🔍 req.body completo:', JSON.stringify(req.body, null, 2));
-    console.log('🆔 userId:', userId);
     
     const { nombre, apellidos, telefono, direccion, avatar_url } = req.body;
-    console.log('📝 Datos extraídos:', { nombre, apellidos, telefono, direccion, avatar_url });
-    console.log('📝 Tipos:', { 
-      nombre: typeof nombre, 
-      apellidos: typeof apellidos, 
-      telefono: typeof telefono, 
-      direccion: typeof direccion 
-    });
 
     if (!nombre || nombre.trim().length < 2) {
       return res.status(400).json({
@@ -212,8 +198,6 @@ router.put('/profile', authenticateToken, async (req, res) => {
       avatar_url || null,
       userId
     ];
-    
-    console.log('💾 Parámetros finales para UPDATE:', params);
 
     await query(`
       UPDATE monitoreo_ciudadano.usuarios 
@@ -241,7 +225,7 @@ router.put('/profile', authenticateToken, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error actualizando perfil:', error);
+    console.error('Error actualizando perfil:', error);
     res.status(500).json({
       success: false,
       message: 'Error interno del servidor'

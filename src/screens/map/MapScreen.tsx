@@ -91,7 +91,7 @@ const MapScreen: React.FC = () => {
       
       setCategorias(categoriasUI);
     } catch (error) {
-      console.error('❌ Error cargando categorías:', error);
+      console.error('Error cargando categorías:', error);
       // Fallback a categorías por defecto si falla
       setCategorias([
         { id: '1', nombre: 'Infraestructura', descripcion: '', activa: true },
@@ -112,9 +112,7 @@ const MapScreen: React.FC = () => {
     try {
       setLoading(true);
       
-      console.log('🗺️ [MapScreen] Cargando reportes validados para el mapa...');
       const reportes = await reporteService.getReportesParaMapa();
-      console.log('📥 [MapScreen] Reportes recibidos del backend:', reportes);
 
       if (reportes && reportes.length > 0) {
         // Convertir los reportes del servicio al formato esperado por el mapa
@@ -146,13 +144,11 @@ const MapScreen: React.FC = () => {
         }));
 
         setReports(reportesParaMapa);
-        console.log(`✅ ${reportesParaMapa.length} reportes cargados en el mapa`);
       } else {
-        console.log('⚠️ No se encontraron reportes');
         setReports([]);
       }
     } catch (error) {
-      console.error('❌ Error cargando reportes:', error);
+      console.error('Error cargando reportes:', error);
       Alert.alert('Error', 'No se pudieron cargar los reportes del mapa');
       setReports([]);
     } finally {
@@ -165,12 +161,9 @@ const MapScreen: React.FC = () => {
    */
   const getUserLocation = async (showDialog = false) => {
     try {
-      console.log('📍 Solicitando ubicación del usuario...');
-      
       const location = await getCurrentLocation({ showDialog });
       
       if (location) {
-        console.log('✅ Ubicación obtenida:', location);
         setUserLocation({
           latitude: location.latitude,
           longitude: location.longitude,
@@ -184,7 +177,6 @@ const MapScreen: React.FC = () => {
           longitudeDelta: 0.01,
         });
       } else {
-        console.log('⚠️ No se pudo obtener la ubicación');
         // Si hay reportes y no es una solicitud manual, centrar en el primer reporte
         if (reports.length > 0 && !showDialog) {
           const firstReport = reports[0];
@@ -197,7 +189,7 @@ const MapScreen: React.FC = () => {
         }
       }
     } catch (error) {
-      console.error('❌ Error obteniendo ubicación del usuario:', error);
+      console.error('Error obteniendo ubicación del usuario:', error);
     }
   };
 
@@ -242,7 +234,6 @@ const MapScreen: React.FC = () => {
    * Refrescar reportes en el mapa
    */
   const refrescarReportes = async () => {
-    console.log('🔄 Refrescando reportes del mapa...');
     await loadReports();
   };
 
@@ -262,7 +253,7 @@ const MapScreen: React.FC = () => {
   const handleViewReportDetails = (report: Reporte) => {
     setShowReportModal(false);
     setShowClusterModal(false);
-    // Navegación temporal - en una implementación real usarías el stack navigator apropiado
+    // TODO: Implementar navegación a detalles del reporte
     console.log('Navegando a detalles del reporte:', report.id);
   };
 
@@ -320,21 +311,21 @@ const MapScreen: React.FC = () => {
             style={styles.controlButton}
             onPress={() => setShowFilters(true)}
           >
-            <Text style={styles.controlIcon}>🔍</Text>
+            <Text style={styles.controlIcon}>F</Text>
           </TouchableOpacity>
           
           <TouchableOpacity
             style={[styles.controlButton, enableClustering && styles.controlButtonActive]}
             onPress={() => setEnableClustering(!enableClustering)}
           >
-            <Text style={styles.controlIcon}>{enableClustering ? "📊" : "📍"}</Text>
+            <Text style={styles.controlIcon}>{enableClustering ? "C" : "P"}</Text>
           </TouchableOpacity>
           
           <TouchableOpacity
             style={styles.controlButton}
             onPress={() => getUserLocation(true)}
           >
-            <Text style={styles.controlIcon}>🎯</Text>
+            <Text style={styles.controlIcon}>L</Text>
           </TouchableOpacity>
         </View>
       </AnimatedEntrance>
@@ -440,7 +431,7 @@ const MapScreen: React.FC = () => {
                   onPress={() => handleViewReportDetails(report)}
                 >
                   <View style={styles.reportItemHeader}>
-                    <Text style={styles.reportIcon}>📍</Text>
+                    <Text style={styles.reportIcon}>*</Text>
                     <View style={styles.reportItemContent}>
                       <Text style={styles.reportTitle}>{report.titulo}</Text>
                       <Text style={styles.reportDescription} numberOfLines={2}>
@@ -477,15 +468,15 @@ const MapScreen: React.FC = () => {
                 </Text>
                 <View style={styles.reportStats}>
                   <View style={styles.statItem}>
-                    <Text style={styles.statIcon}>👍</Text>
+                    <Text style={styles.statIcon}>+</Text>
                     <Text style={styles.statValue}>{selectedReport.likes}</Text>
                   </View>
                   <View style={styles.statItem}>
-                    <Text style={styles.statIcon}>✅</Text>
+                    <Text style={styles.statIcon}>V</Text>
                     <Text style={styles.statValue}>{selectedReport.validaciones}</Text>
                   </View>
                   <View style={styles.statItem}>
-                    <Text style={styles.statIcon}>💬</Text>
+                    <Text style={styles.statIcon}>M</Text>
                     <Text style={styles.statValue}>{selectedReport.comentarios_count}</Text>
                   </View>
                 </View>

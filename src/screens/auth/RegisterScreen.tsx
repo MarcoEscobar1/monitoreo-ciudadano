@@ -165,18 +165,16 @@ const RegisterScreen: React.FC = () => {
         const success = await register(formData.name, formData.email, formData.password, undefined, formData.apellidos);
         if (!success) {
           Alert.alert(
-            '❌ Error en registro',
+            'Error en registro',
             'No se pudo crear la cuenta. Verifica que el email no esté en uso.',
             [{ text: 'Entendido' }]
           );
         }
       } catch (error: any) {
-        console.log('Error en registro:', error);
-        
         // Si requiere validación, mostrar mensaje especial y volver a login
         if (error.message === 'REQUIRES_VALIDATION') {
           Alert.alert(
-            '✅ Cuenta creada exitosamente',
+            'Cuenta creada exitosamente',
             'Tu cuenta ha sido creada. Un administrador debe validarla antes de que puedas iniciar sesión. Te notificaremos cuando tu cuenta esté lista.',
             [
               { 
@@ -191,7 +189,7 @@ const RegisterScreen: React.FC = () => {
         const errorMessage = error.message || 'No se pudo crear la cuenta. Intenta nuevamente.';
         
         Alert.alert(
-          '❌ Error en registro',
+          'Error en registro',
           errorMessage,
           [{ text: 'Entendido' }]
         );
@@ -212,7 +210,7 @@ const RegisterScreen: React.FC = () => {
         <AnimatedEntrance type="slideInDown">
           <View style={styles.header}>
             <View style={styles.iconContainer}>
-              <Text style={styles.icon}>🇧🇴</Text>
+              <Text style={styles.icon}>MC</Text>
             </View>
             <Text style={styles.title}>Crear Cuenta</Text>
             <Text style={styles.subtitle}>
@@ -230,7 +228,6 @@ const RegisterScreen: React.FC = () => {
                 value={formData.name}
                 onChangeText={(value: string) => handleInputChange('name', value)}
                 error={errors.name}
-                leftIcon="👤"
                 style={styles.input}
               />
 
@@ -239,7 +236,6 @@ const RegisterScreen: React.FC = () => {
                 value={formData.apellidos}
                 onChangeText={(value: string) => handleInputChange('apellidos', value)}
                 error={errors.apellidos}
-                leftIcon="👤"
                 style={styles.input}
               />
 
@@ -248,7 +244,6 @@ const RegisterScreen: React.FC = () => {
                 value={formData.email}
                 onChangeText={(value: string) => handleInputChange('email', value)}
                 error={errors.email}
-                leftIcon="📧"
                 keyboardType="email-address"
                 autoCapitalize="none"
                 style={styles.input}
@@ -259,9 +254,7 @@ const RegisterScreen: React.FC = () => {
                 value={formData.password}
                 onChangeText={(value: string) => handleInputChange('password', value)}
                 error={errors.password}
-                leftIcon="🔒"
                 secureTextEntry={!showPassword}
-                rightIcon={showPassword ? "👁️" : "🙈"}
                 onRightIconPress={() => setShowPassword(!showPassword)}
                 style={styles.input}
               />
@@ -271,9 +264,7 @@ const RegisterScreen: React.FC = () => {
                 value={formData.confirmPassword}
                 onChangeText={(value: string) => handleInputChange('confirmPassword', value)}
                 error={errors.confirmPassword}
-                leftIcon="🔐"
                 secureTextEntry={!showConfirmPassword}
-                rightIcon={showConfirmPassword ? "👁️" : "🙈"}
                 onRightIconPress={() => setShowConfirmPassword(!showConfirmPassword)}
                 style={styles.input}
               />

@@ -33,14 +33,11 @@ const AdminDashboardScreen = ({ navigation }: any) => {
 
   const loadStats = async () => {
     try {
-      console.log('📊 AdminDashboard: Cargando estadísticas...');
       const data = await adminService.getReportsStats();
-      console.log('📡 AdminDashboard: Stats recibidas:', JSON.stringify(data));
       setStats(data);
       
       // Cargar usuarios pendientes
       const pendingUsers = await adminService.getPendingUsers();
-      console.log('👥 AdminDashboard: Usuarios pendientes:', pendingUsers.length);
       setPendingUsersCount(pendingUsers.length);
       
       // Actualizar badges
@@ -60,7 +57,6 @@ const AdminDashboardScreen = ({ navigation }: any) => {
   // Refrescar cuando la pantalla gana foco
   useFocusEffect(
     React.useCallback(() => {
-      console.log('📱 AdminDashboard enfocado, refrescando badges...');
       refreshBadges();
     }, [refreshBadges])
   );

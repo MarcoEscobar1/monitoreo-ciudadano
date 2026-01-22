@@ -45,7 +45,6 @@ export {
 // MAPAS
 // ================================
 export { LocationSelectorMap } from './maps/LocationSelectorMap';
-export { ReportesMap } from './maps/ReportesMap';
 
 // ================================
 // NAVEGACIÓN
@@ -61,8 +60,3 @@ export {
 // ================================
 export { Dashboard } from './dashboard/Dashboard';
 export { ReportDetail } from './reports/ReportDetail';
-
-// ================================
-// COMPONENTES EXISTENTES MEJORADOS
-// ================================
-export { default as ReportTimelineV2 } from './ReportTimelineV2';

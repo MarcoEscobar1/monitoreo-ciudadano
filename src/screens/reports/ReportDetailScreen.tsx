@@ -115,11 +115,9 @@ const ReportDetailScreen: React.FC<Props> = ({ route }) => {
     const loadReportData = async () => {
       try {
         setLoading(true);
-        console.log('📥 Cargando reporte:', reportId);
         const response = await reportService.getById(reportId);
         
         if (response.success && response.data) {
-          console.log('✅ Reporte cargado:', response.data);
           setReportData({
             id: response.data.id,
             titulo: response.data.titulo,
@@ -145,7 +143,7 @@ const ReportDetailScreen: React.FC<Props> = ({ route }) => {
           navigation.goBack();
         }
       } catch (error) {
-        console.error('❌ Error cargando reporte:', error);
+        console.error('Error cargando reporte:', error);
         showSnackbar('Error al cargar el reporte');
         navigation.goBack();
       } finally {

@@ -29,8 +29,6 @@ export const reverseGeocode = async (coordinates: Coordenada): Promise<Ubicacion
       `addressdetails=1&` +
       `accept-language=es`;
 
-    console.log('🌍 Geocodificación inversa:', url);
-
     const response = await fetch(url, { headers: HEADERS });
     
     if (!response.ok) {
@@ -40,7 +38,6 @@ export const reverseGeocode = async (coordinates: Coordenada): Promise<Ubicacion
     const data = await response.json();
     
     if (!data || data.error) {
-      console.warn('⚠️ No se encontró información de ubicación:', data?.error);
       return {
         latitude,
         longitude,
@@ -61,11 +58,10 @@ export const reverseGeocode = async (coordinates: Coordenada): Promise<Ubicacion
       postalCode: address.postcode,
     };
 
-    console.log('✅ Geocodificación exitosa:', ubicacion);
     return ubicacion;
 
   } catch (error) {
-    console.error('❌ Error en geocodificación inversa:', error);
+    console.error('Error en geocodificación inversa:', error);
     return {
       latitude: coordinates.latitude,
       longitude: coordinates.longitude,
@@ -87,8 +83,6 @@ export const geocode = async (address: string): Promise<Coordenada[]> => {
       `accept-language=es&` +
       `countrycodes=co`; // Limitar a Colombia
 
-    console.log('🔍 Búsqueda de geocodificación:', url);
-
     const response = await fetch(url, { headers: HEADERS });
     
     if (!response.ok) {
@@ -98,7 +92,6 @@ export const geocode = async (address: string): Promise<Coordenada[]> => {
     const data = await response.json();
     
     if (!Array.isArray(data) || data.length === 0) {
-      console.warn('⚠️ No se encontraron resultados para:', address);
       return [];
     }
 
@@ -107,11 +100,10 @@ export const geocode = async (address: string): Promise<Coordenada[]> => {
       longitude: parseFloat(item.lon),
     }));
 
-    console.log('✅ Geocodificación exitosa:', coordenadas);
     return coordenadas;
 
   } catch (error) {
-    console.error('❌ Error en geocodificación:', error);
+    console.error('Error en geocodificación:', error);
     return [];
   }
 };
@@ -134,8 +126,6 @@ export const searchPlaces = async (query: string, coordinates?: Coordenada): Pro
       url += `&lat=${coordinates.latitude}&lon=${coordinates.longitude}&radius=50000`; // 50km radius
     }
 
-    console.log('🔍 Búsqueda de lugares:', url);
-
     const response = await fetch(url, { headers: HEADERS });
     
     if (!response.ok) {
@@ -145,7 +135,6 @@ export const searchPlaces = async (query: string, coordinates?: Coordenada): Pro
     const data = await response.json();
     
     if (!Array.isArray(data) || data.length === 0) {
-      console.warn('⚠️ No se encontraron lugares para:', query);
       return [];
     }
 
@@ -162,11 +151,10 @@ export const searchPlaces = async (query: string, coordinates?: Coordenada): Pro
       };
     });
 
-    console.log('✅ Búsqueda exitosa:', lugares);
     return lugares;
 
   } catch (error) {
-    console.error('❌ Error en búsqueda de lugares:', error);
+    console.error('Error en búsqueda de lugares:', error);
     return [];
   }
 };
@@ -182,8 +170,6 @@ export const getPlaceDetails = async (osmId: string, osmType: 'node' | 'way' | '
       `addressdetails=1&` +
       `accept-language=es`;
 
-    console.log('📍 Detalles de lugar:', url);
-
     const response = await fetch(url, { headers: HEADERS });
     
     if (!response.ok) {
@@ -193,7 +179,6 @@ export const getPlaceDetails = async (osmId: string, osmType: 'node' | 'way' | '
     const data = await response.json();
     
     if (!Array.isArray(data) || data.length === 0) {
-      console.warn('⚠️ No se encontraron detalles para OSM ID:', osmId);
       return null;
     }
 
@@ -210,11 +195,10 @@ export const getPlaceDetails = async (osmId: string, osmType: 'node' | 'way' | '
       postalCode: address.postcode,
     };
 
-    console.log('✅ Detalles obtenidos:', lugar);
     return lugar;
 
   } catch (error) {
-    console.error('❌ Error obteniendo detalles del lugar:', error);
+    console.error('Error obteniendo detalles del lugar:', error);
     return null;
   }
 };

@@ -191,7 +191,7 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ status, size = 'medium' }) =>
 
 const PriorityBadge: React.FC<PriorityBadgeProps> = ({ priority, size = 'medium' }) => {
   const color = getPriorityColor(priority);
-  const icon = priority === 'alta' ? '🔴' : priority === 'media' ? '🟡' : '🟢';
+  const icon = priority === 'alta' ? 'A' : priority === 'media' ? 'M' : 'B';
   
   return (
     <View style={styles.priorityBadge}>
@@ -288,17 +288,17 @@ const ReportHeader: React.FC<{
 
 const ReportInfo: React.FC<{ report: Report }> = ({ report }) => {
   const priorityText = report.prioridad.charAt(0).toUpperCase() + report.prioridad.slice(1);
-  const priorityIcon = report.prioridad === 'alta' ? '🔴' : report.prioridad === 'media' ? '🟡' : '🟢';
+  const priorityIcon = report.prioridad === 'alta' ? 'A' : report.prioridad === 'media' ? 'M' : 'B';
   
   const infoItems = [
     {
-      icon: '📅',
-      label: 'Fecha de creación',
+      icon: '*',
+      label: 'Fecha de creacion',
       value: formatDate(report.fechaCreacion),
     },
     {
-      icon: '📂',
-      label: 'Categoría',
+      icon: '*',
+      label: 'Categoria',
       value: report.categoria,
     },
     {
@@ -307,18 +307,18 @@ const ReportInfo: React.FC<{ report: Report }> = ({ report }) => {
       value: priorityText,
     },
     {
-      icon: '👤',
+      icon: '*',
       label: 'Reportado por',
       value: report.ciudadano.nombre,
     },
     {
-      icon: '📧',
+      icon: '@',
       label: 'Contacto',
       value: report.ciudadano.email,
     },
     {
-      icon: '📍',
-      label: 'Ubicación',
+      icon: '*',
+      label: 'Ubicacion',
       value: report.direccion || formatLocation(report.latitud, report.longitud),
     },
   ];
@@ -376,7 +376,7 @@ const RejectionNotice: React.FC<{ comentarios: string }> = ({ comentarios }) => 
     <AnimatedEntrance type="slideInUp" config={{ duration: 400, delay: 350 }}>
       <Card variant="elevated" size="medium" style={styles.rejectionCard}>
         <CardHeader 
-          title="⚠️ Reporte Rechazado" 
+          title="Reporte Rechazado" 
           titleStyle={styles.rejectionTitle}
         />
         <CardContent>

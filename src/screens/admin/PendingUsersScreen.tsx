@@ -59,7 +59,6 @@ export const PendingUsersScreen: React.FC = () => {
   // Refrescar badges cuando la pantalla gana foco
   useFocusEffect(
     useCallback(() => {
-      console.log('👮 PendingUsersScreen enfocada, actualizando badges...');
       refreshBadges();
     }, [refreshBadges])
   );
@@ -198,7 +197,7 @@ export const PendingUsersScreen: React.FC = () => {
                   <View style={styles.userDetails}>
                     {user.telefono && (
                       <View style={styles.detailRow}>
-                        <Text style={styles.detailIcon}>📱</Text>
+                        <Text style={styles.detailIcon}>T:</Text>
                         <Text style={styles.detailText}>{user.telefono}</Text>
                       </View>
                     )}

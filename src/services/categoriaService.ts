@@ -1,7 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CategoriaProblema } from '../types';
 import { categoryService } from './apiService';
-import { addEmojisToCategories } from '../utils/categoryEmojiMapperFixed';
 
 /**
  * Servicio simplificado para gestión de categorías
@@ -18,61 +17,55 @@ class CategoriaService {
       id: 'default-1',
       nombre: 'Infraestructura',
       descripcion: 'Problemas relacionados con calles, aceras, puentes, etc.',
-      icono: '🏗️',
+      icono: 'build',
       color: '#FF6B35',
       activa: true,
-      orden: 1,
-      emoji: '🏗️'
+      orden: 1
     },
     {
       id: 'default-2',
       nombre: 'Transporte',
       descripcion: 'Problemas de transporte público, semáforos, señalización',
-      icono: '🚗',
+      icono: 'directions-car',
       color: '#004E89',
       activa: true,
-      orden: 2,
-      emoji: '🚗'
+      orden: 2
     },
     {
       id: 'default-3',
       nombre: 'Medio Ambiente',
       descripcion: 'Contaminación, basuras, espacios verdes',
-      icono: '🌱',
+      icono: 'eco',
       color: '#2ECC71',
       activa: true,
-      orden: 3,
-      emoji: '🌱'
+      orden: 3
     },
     {
       id: 'default-4',
       nombre: 'Seguridad',
       descripcion: 'Problemas de seguridad ciudadana, alumbrado público',
-      icono: '🛡️',
+      icono: 'security',
       color: '#E74C3C',
       activa: true,
-      orden: 4,
-      emoji: '🛡️'
+      orden: 4
     },
     {
       id: 'default-5',
       nombre: 'Servicios Públicos',
       descripcion: 'Agua, luz, gas, recolección de basuras',
-      icono: '💡',
+      icono: 'lightbulb',
       color: '#F39C12',
       activa: true,
-      orden: 5,
-      emoji: '💡'
+      orden: 5
     },
     {
       id: 'default-6',
       nombre: 'Salud',
       descripcion: 'Servicios de salud pública, centros de salud',
-      icono: '🏥',
+      icono: 'local-hospital',
       color: '#9B59B6',
       activa: true,
-      orden: 6,
-      emoji: '🏥'
+      orden: 6
     }
   ];
 
@@ -91,7 +84,6 @@ class CategoriaService {
       if (data) {
         this.categorias = JSON.parse(data);
         this.lastUpdate = lastUpdateData ? new Date(lastUpdateData) : null;
-        console.log(`📋 Categorías cargadas desde cache: ${this.categorias.length}`);
       }
 
       // Si no hay datos o son muy antiguos (más de 1 hora), intentar actualizar
@@ -103,7 +95,7 @@ class CategoriaService {
       }
 
     } catch (error) {
-      console.error('❌ Error cargando categorías:', error);
+      console.error('Error cargando categorías:', error);
       this.categorias = [...this.categoriasDefault];
     }
   }
@@ -113,24 +105,18 @@ class CategoriaService {
    */
   private async syncWithBackend(): Promise<void> {
     try {
-      console.log('🔄 Sincronizando categorías con backend...');
       const backendCategorias = await categoryService.getAll();
       
       if (backendCategorias && backendCategorias.length > 0) {
         // Las categorías ya vienen con encoding correcto desde la base de datos
-        // Agregamos emojis para visualización en la aplicación
-        this.categorias = addEmojisToCategories(backendCategorias);
+        this.categorias = backendCategorias;
         this.lastUpdate = new Date();
         
         // Guardar en cache
         await AsyncStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.categorias));
         await AsyncStorage.setItem(`${this.STORAGE_KEY}_last_update`, this.lastUpdate.toISOString());
-        
-        console.log(`✅ Categorías sincronizadas: ${this.categorias.length} (encoding correcto desde BD)`);
       }
     } catch (error) {
-      console.log('⚠️ No se pudo sincronizar con backend, usando cache/default');
-      
       // Si no hay cache, usar categorías por defecto
       if (this.categorias.length === 0) {
         this.categorias = [...this.categoriasDefault];
@@ -163,7 +149,7 @@ class CategoriaService {
         return backendCategoria; // Ya viene con encoding correcto
       }
     } catch (error) {
-      console.log('⚠️ Backend no disponible para categoría específica');
+      // Backend no disponible, usar cache local
     }
 
     // Fallback a cache local
@@ -195,7 +181,7 @@ class CategoriaService {
       await this.syncWithBackend();
       return true;
     } catch (error) {
-      console.error('❌ Error forzando actualización:', error);
+      console.error('Error forzando actualización:', error);
       return false;
     }
   }
@@ -209,9 +195,8 @@ class CategoriaService {
       await AsyncStorage.removeItem(`${this.STORAGE_KEY}_last_update`);
       this.categorias = [];
       this.lastUpdate = null;
-      console.log('✅ Cache de categorías limpiado');
     } catch (error) {
-      console.error('❌ Error limpiando cache:', error);
+      console.error('Error limpiando cache:', error);
     }
   }
 }

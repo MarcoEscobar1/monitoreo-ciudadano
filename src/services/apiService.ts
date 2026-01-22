@@ -16,22 +16,14 @@ const getApiBaseUrl = () => {
   
   // Si es Android y estamos en emulador, usar 10.0.2.2 en lugar de localhost o 192.168.x.x
   if (Platform.OS === 'android' && !Device.isDevice) {
-    console.log('📱 Emulador Android detectado, usando 10.0.2.2');
     return envUrl.replace('localhost', '10.0.2.2').replace(/192\.168\.\d+\.\d+/, '10.0.2.2');
   }
   
-  console.log('📱 Dispositivo físico o iOS, usando URL configurada:', envUrl);
   return envUrl;
 };
 
 // Configuración del API
 const API_BASE_URL = getApiBaseUrl();
-
-// Log de la configuración al iniciar
-console.log('🔧 API Service inicializado');
-console.log('🌐 URL Base del API:', API_BASE_URL);
-console.log('📱 Platform:', Platform.OS);
-console.log('📱 Es dispositivo físico:', Device.isDevice);
 
 // Función para obtener token de autenticación
 const getAuthToken = async (): Promise<string | null> => {
@@ -50,7 +42,6 @@ const makeRequest = async (
 ): Promise<any> => {
   try {
     const url = `${API_BASE_URL}${endpoint}`;
-    console.log('🌐 Intentando conectar a:', url);
     
     const token = await getAuthToken();
     
@@ -64,14 +55,10 @@ const makeRequest = async (
       headers['Authorization'] = `Bearer ${token}`;
     }
 
-    console.log('📤 Enviando petición:', { url, method: options.method || 'GET' });
-
     const response = await fetch(url, {
       ...options,
       headers,
     });
-
-    console.log('📥 Respuesta recibida:', response.status, response.statusText);
 
     const data = await response.json();
 
@@ -81,17 +68,13 @@ const makeRequest = async (
 
     return data;
   } catch (error) {
-    console.error('❌ Error en petición API:', error);
-    console.error('📍 URL que falló:', `${API_BASE_URL}${endpoint}`);
-    console.error('🔍 Detalles del error:', error instanceof Error ? error.message : 'Error desconocido');
+    console.error('Error en petición API:', error);
     throw error;
   }
 };
 
 // Función para simular query de PostgreSQL (para mantener compatibilidad)
 export const query = async (text: string, params?: any[]) => {
-  console.log('⚠️ Usando query legacy - considera migrar a servicios específicos');
-  
   // Redirigir a servicios específicos según el tipo de query
   if (text.includes('SELECT * FROM usuarios WHERE email =')) {
     const email = params?.[0];
@@ -109,7 +92,6 @@ export const query = async (text: string, params?: any[]) => {
   }
   
   if (text.includes('INSERT INTO usuarios')) {
-    console.log('📝 Creación de usuario detectada - usar userService.create()');
     return {
       rows: [],
       rowCount: 0
@@ -207,16 +189,13 @@ export const authService = {
         await makeRequest('/auth/logout', {
           method: 'POST'
         });
-        console.log('✅ Logout notificado al backend');
       } catch (backendError) {
-        console.log('⚠️ No se pudo notificar logout al backend:', backendError);
         // No es crítico, continuamos con logout local
       }
       
       // 2. Limpiar datos locales
       await AsyncStorage.removeItem('userToken');
       await AsyncStorage.removeItem('userData');
-      console.log('✅ Datos locales eliminados');
       
       return { success: true };
     } catch (error) {
@@ -232,7 +211,6 @@ export const userService = {
     try {
       return await makeRequest(`/users/email/${encodeURIComponent(email)}`);
     } catch (error) {
-      console.log('🔄 Usuario no encontrado:', email);
       return null;
     }
   },
@@ -244,7 +222,6 @@ export const userService = {
     password_hash: string;
     telefono?: string;
   }) => {
-    console.log('⚠️ userService.create es legacy - usar authService.register');
     try {
       return await authService.register({
         nombre: userData.nombre,
@@ -453,17 +430,14 @@ export const notificationService = {
 export const testConnection = async (): Promise<boolean> => {
   try {
     await makeRequest('/health');
-    console.log('✅ Conexión con API exitosa');
     return true;
   } catch (error) {
-    console.log('⚠️ API no disponible, funcionando en modo offline');
     return false;
   }
 };
 
 // Función para transacciones (compatibilidad)
 export const transaction = async (callback: (client: any) => Promise<any>) => {
-  console.log('⚠️ Transacciones no implementadas en modo API');
   // En un entorno real, esto podría manejar transacciones a través de la API
   return await callback(null);
 };

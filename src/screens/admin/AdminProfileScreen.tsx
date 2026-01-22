@@ -40,11 +40,11 @@ const AdminProfileScreen: React.FC = () => {
   const getRoleLabel = (rol: string) => {
     switch (rol) {
       case 'ADMINISTRADOR':
-        return '👑 Administrador';
+        return 'Administrador';
       case 'MODERADOR':
-        return '🛡️ Moderador';
+        return 'Moderador';
       default:
-        return '👤 Usuario';
+        return 'Usuario';
     }
   };
 
@@ -62,13 +62,11 @@ const AdminProfileScreen: React.FC = () => {
           style: 'destructive',
           onPress: async () => {
             try {
-              console.log('🔄 Iniciando logout desde AdminProfileScreen...');
               await logout();
-              console.log('✅ Logout completado, navegación automática al login');
             } catch (error) {
-              console.error('❌ Error en logout:', error);
+              console.error('Error en logout:', error);
               Alert.alert(
-                '❌ Error',
+                'Error',
                 'Hubo un problema al cerrar sesión. Se cerrará la sesión localmente.',
                 [{ text: 'OK' }]
               );

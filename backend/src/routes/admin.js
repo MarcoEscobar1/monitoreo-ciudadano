@@ -37,7 +37,7 @@ router.get('/reports/pending', async (req, res) => {
       count: result.rowCount
     });
   } catch (error) {
-    console.error('❌ Error obteniendo reportes pendientes:', error);
+    console.error('Error obteniendo reportes pendientes:', error);
     res.status(500).json({
       success: false,
       message: 'Error interno del servidor'
@@ -62,15 +62,12 @@ router.get('/reports/stats', async (req, res) => {
       FROM monitoreo_ciudadano.reportes
     `);
 
-    console.log('📊 Stats calculadas:', result.rows[0]);
-    console.log('📊 pendientes_validacion:', result.rows[0].pendientes_validacion, 'tipo:', typeof result.rows[0].pendientes_validacion);
-
     res.json({
       success: true,
       data: result.rows[0]
     });
   } catch (error) {
-    console.error('❌ Error obteniendo estadísticas:', error);
+    console.error('Error obteniendo estadísticas:', error);
     res.status(500).json({
       success: false,
       message: 'Error interno del servidor'
@@ -111,7 +108,7 @@ router.post('/reports/:id/validate', async (req, res) => {
       data: result.rows[0]
     });
   } catch (error) {
-    console.error('❌ Error validando reporte:', error);
+    console.error('Error validando reporte:', error);
     res.status(500).json({
       success: false,
       message: 'Error interno del servidor'
@@ -159,7 +156,7 @@ router.post('/reports/:id/reject', async (req, res) => {
       data: result.rows[0]
     });
   } catch (error) {
-    console.error('❌ Error rechazando reporte:', error);
+    console.error('Error rechazando reporte:', error);
     res.status(500).json({
       success: false,
       message: 'Error interno del servidor'
@@ -205,7 +202,7 @@ router.patch('/reports/:id/status', async (req, res) => {
       data: result.rows[0]
     });
   } catch (error) {
-    console.error('❌ Error actualizando estado:', error);
+    console.error('Error actualizando estado:', error);
     res.status(500).json({
       success: false,
       message: 'Error interno del servidor'
@@ -260,7 +257,7 @@ router.get('/users', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('❌ Error obteniendo usuarios:', error);
+    console.error('Error obteniendo usuarios:', error);
     res.status(500).json({
       success: false,
       message: 'Error interno del servidor'
@@ -294,7 +291,7 @@ router.patch('/users/:id/status', async (req, res) => {
       data: result.rows[0]
     });
   } catch (error) {
-    console.error('❌ Error actualizando usuario:', error);
+    console.error('Error actualizando usuario:', error);
     res.status(500).json({
       success: false,
       message: 'Error interno del servidor'
@@ -323,7 +320,7 @@ router.get('/categories', async (req, res) => {
       data: result.rows
     });
   } catch (error) {
-    console.error('❌ Error obteniendo categorías:', error);
+    console.error('Error obteniendo categorías:', error);
     res.status(500).json({
       success: false,
       message: 'Error interno del servidor'
@@ -356,7 +353,7 @@ router.post('/categories', async (req, res) => {
       data: result.rows[0]
     });
   } catch (error) {
-    console.error('❌ Error creando categoría:', error);
+    console.error('Error creando categoría:', error);
     res.status(500).json({
       success: false,
       message: 'Error interno del servidor'
@@ -394,7 +391,7 @@ router.put('/categories/:id', async (req, res) => {
       data: result.rows[0]
     });
   } catch (error) {
-    console.error('❌ Error actualizando categoría:', error);
+    console.error('Error actualizando categoría:', error);
     res.status(500).json({
       success: false,
       message: 'Error interno del servidor'
@@ -424,7 +421,7 @@ router.get('/reports/by-category', async (req, res) => {
       data: result.rows
     });
   } catch (error) {
-    console.error('❌ Error obteniendo reportes por categoría:', error);
+    console.error('Error obteniendo reportes por categoría:', error);
     res.status(500).json({
       success: false,
       message: 'Error interno del servidor'
@@ -456,7 +453,7 @@ router.get('/users/pending', async (req, res) => {
       count: result.rowCount
     });
   } catch (error) {
-    console.error('❌ Error obteniendo usuarios pendientes:', error);
+    console.error('Error obteniendo usuarios pendientes:', error);
     res.status(500).json({
       success: false,
       message: 'Error interno del servidor'
@@ -495,7 +492,7 @@ router.post('/users/:id/validate', async (req, res) => {
       data: result.rows[0]
     });
   } catch (error) {
-    console.error('❌ Error validando cuenta:', error);
+    console.error('Error validando cuenta:', error);
     res.status(500).json({
       success: false,
       message: 'Error interno del servidor'
@@ -543,7 +540,7 @@ router.post('/users/:id/reject', async (req, res) => {
       data: result.rows[0]
     });
   } catch (error) {
-    console.error('❌ Error rechazando cuenta:', error);
+    console.error('Error rechazando cuenta:', error);
     res.status(500).json({
       success: false,
       message: 'Error interno del servidor'

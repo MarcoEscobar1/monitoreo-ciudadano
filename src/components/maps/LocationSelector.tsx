@@ -78,7 +78,7 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
         setAddress(location.address || 'Ubicación actual');
       }
     } catch (error) {
-      console.error('❌ Error obteniendo ubicación:', error);
+      console.error('Error obteniendo ubicacion:', error);
       Alert.alert(
         'Error de Ubicación',
         'No se pudo obtener tu ubicación actual. Por favor, selecciona manualmente en el mapa.'

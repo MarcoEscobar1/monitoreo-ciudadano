@@ -11,7 +11,6 @@ const router = express.Router();
 router.get('/my', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.userId;
-    console.log(`📥 GET /api/reports/my - Usuario: ${userId}`);
 
     const result = await query(`
       SELECT 
@@ -37,8 +36,6 @@ router.get('/my', authenticateToken, async (req, res) => {
       WHERE r.usuario_id = $1
       ORDER BY r.fecha_creacion DESC
     `, [userId]);
-
-    console.log(`✅ Reportes encontrados: ${result.rows.length}`);
 
     // Transformar los resultados
     const reportes = result.rows.map(row => {
@@ -82,8 +79,7 @@ router.get('/my', authenticateToken, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error obteniendo mis reportes:', error);
-    console.error('Stack trace:', error.stack);
+    console.error('Error obteniendo mis reportes:', error);
     res.status(500).json({
       success: false,
       message: 'Error al obtener reportes',
@@ -142,7 +138,6 @@ router.get('/mapa', async (req, res) => {
     `;
     queryParams.push(limite);
 
-    console.log(`📍 GET /api/reports/mapa - ${new Date().toISOString()}`);
     const result = await query(queryText, queryParams);
 
     const reportesMapa = result.rows.map(row => ({
@@ -167,7 +162,7 @@ router.get('/mapa', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error obteniendo reportes para mapa:', error);
+    console.error('Error obteniendo reportes para mapa:', error);
     res.status(500).json({
       success: false,
       message: 'Error interno del servidor'
@@ -265,7 +260,7 @@ router.get('/', async (req, res) => {
         u.nombre as usuario_nombre,
         cp.id as categoria_id,
         cp.nombre as categoria_nombre,
-        (SELECT COUNT(*) FROM monitoreo_ciudadano.comentarios c WHERE c.reporte_id = r.id) as comentarios_count,
+        0 as comentarios_count,
         COALESCE(r.imagenes_adicionales, ARRAY[]::text[]) as imagenes
         ${distanceSelect}
       FROM monitoreo_ciudadano.reportes r
@@ -343,7 +338,7 @@ router.get('/', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error obteniendo reportes:', error);
+    console.error('Error obteniendo reportes:', error);
     res.status(500).json({
       success: false,
       message: 'Error interno del servidor'
@@ -358,7 +353,6 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    console.log(`📥 GET /api/reports/${id} - Buscando reporte...`);
 
     const result = await query(`
       SELECT 
@@ -391,10 +385,7 @@ router.get('/:id', async (req, res) => {
       WHERE r.id = $1
     `, [id]);
 
-    console.log(`✅ Resultado de búsqueda: ${result.rows.length} reportes encontrados`);
-
     if (result.rows.length === 0) {
-      console.log(`❌ Reporte ${id} no encontrado en la base de datos`);
       return res.status(404).json({
         success: false,
         message: 'Reporte no encontrado'
@@ -458,7 +449,7 @@ router.get('/:id', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error obteniendo reporte:', error);
+    console.error('Error obteniendo reporte:', error);
     res.status(500).json({
       success: false,
       message: 'Error interno del servidor'
@@ -582,7 +573,7 @@ router.post('/', authenticateToken, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error creando reporte:', error);
+    console.error('Error creando reporte:', error);
     res.status(500).json({
       success: false,
       message: 'Error interno del servidor'
@@ -643,7 +634,7 @@ router.patch('/:id/estado', authenticateToken, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error actualizando estado del reporte:', error);
+    console.error('Error actualizando estado del reporte:', error);
     res.status(500).json({
       success: false,
       message: 'Error interno del servidor'

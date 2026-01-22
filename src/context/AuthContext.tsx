@@ -121,15 +121,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       dispatch({ type: 'LOADING' });
 
-      console.log('🔄 Iniciando sesión con backend...', email);
-
       // Usar el servicio de autenticación real
       const response = await authService.login(email, password);
 
       if (response.success && response.data) {
         // Si la cuenta requiere validación
         if (response.data.requiresValidation) {
-          console.log('⏳ Cuenta pendiente de validación');
           dispatch({ type: 'LOGOUT' });
           throw new Error('ACCOUNT_PENDING_VALIDATION');
         }
@@ -162,27 +159,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         // Guardar token y usuario en SecureStore
         await SecureStore.setItemAsync('userToken', token);
         await SecureStore.setItemAsync('userData', JSON.stringify(usuario));
-        console.log('💾 Token y usuario guardados en SecureStore');
-
-        // Guardar token y usuario en SecureStore
-        await SecureStore.setItemAsync('userToken', token);
-        await SecureStore.setItemAsync('userData', JSON.stringify(usuario));
-        console.log('💾 Token y usuario guardados en SecureStore');
 
         // Actualizar estado
         dispatch({ type: 'LOGIN_SUCCESS', payload: { user: usuario, token } });
 
-        console.log('✅ Login exitoso con backend');
-        console.log('👤 Tipo de usuario:', user.tipo_usuario);
         return true;
       }
 
       // Si el backend respondió pero las credenciales son incorrectas
-      console.error('❌ Credenciales incorrectas');
       dispatch({ type: 'LOGOUT' });
       throw new Error('Credenciales incorrectas');
     } catch (error: any) {
-      console.error('❌ Error en login:', error);
+      console.error('Error en login:', error);
       dispatch({ type: 'LOGOUT' });
       
       // Propagar el error para que el LoginScreen lo maneje
@@ -199,8 +187,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       dispatch({ type: 'LOADING' });
 
-      console.log('🔄 Registrando usuario con backend...', email);
-
       // Usar el servicio de autenticación real
       const response = await authService.register({
         nombre: name,
@@ -213,7 +199,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (response.success && response.data) {
         // Si el registro requiere validación, no iniciar sesión automáticamente
         if (response.data.requiresValidation) {
-          console.log('✅ Registro exitoso - Requiere validación del administrador');
           dispatch({ type: 'LOGOUT' });
           throw new Error('REQUIRES_VALIDATION');
         }
@@ -244,15 +229,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         // Actualizar estado
         dispatch({ type: 'LOGIN_SUCCESS', payload: { user: usuario, token } });
 
-        console.log('✅ Registro exitoso con backend');
         return true;
       }
-
-      console.error('❌ Registro fallido');
       dispatch({ type: 'LOGOUT' });
       throw new Error('No se pudo completar el registro');
     } catch (error: any) {
-      console.error('❌ Error en registro:', error);
+      console.error('Error en registro:', error);
       dispatch({ type: 'LOGOUT' });
       
       // Propagar el error para que el RegisterScreen lo maneje
@@ -279,7 +261,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (result.type === 'success') {
         // Aquí procesarías el token de Google y crearías/buscarías el usuario
         // Por ahora, simulamos un login exitoso
-        console.log('✅ Login con Google exitoso');
         
         // En una implementación real, aquí harías:
         // 1. Obtener información del usuario de Google
@@ -291,7 +272,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       return false;
     } catch (error) {
-      console.error('❌ Error en login con Google:', error);
+      console.error('Error en login con Google:', error);
       return false;
     }
   };
@@ -309,13 +290,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const result = await facebookPromptAsync();
       
       if (result.type === 'success') {
-        console.log('✅ Login con Facebook exitoso');
         return true;
       }
       
       return false;
     } catch (error) {
-      console.error('❌ Error en login con Facebook:', error);
+      console.error('Error en login con Facebook:', error);
       return false;
     }
   };
@@ -323,8 +303,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // Función de logout
   const logout = async (): Promise<void> => {
     try {
-      console.log('🔄 Cerrando sesión...');
-      
       // 1. Actualizar estado inmediatamente para cambiar la navegación
       dispatch({ type: 'LOGOUT' });
       
@@ -332,23 +310,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       try {
         await SecureStore.deleteItemAsync('userToken');
         await SecureStore.deleteItemAsync('userData');
-        console.log('✅ Datos locales eliminados');
       } catch (storageError) {
-        console.warn('⚠️ Error eliminando datos locales:', storageError);
+        console.warn('Error eliminando datos locales:', storageError);
         // No es crítico, continuamos
       }
       
       // 3. Intentar notificar al backend (opcional, no crítico)
       try {
         await authService.logout();
-        console.log('✅ Logout notificado al backend');
       } catch (backendError) {
-        console.log('⚠️ No se pudo notificar al backend, pero logout local exitoso');
+        // No es crítico si falla
       }
-      
-      console.log('✅ Logout completado - Redirigiendo al login');
     } catch (error) {
-      console.error('❌ Error en logout:', error);
+      console.error('Error en logout:', error);
       
       // Asegurar que el logout se complete aunque haya errores
       dispatch({ type: 'LOGOUT' });
@@ -358,21 +332,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // Función de reseteo de contraseña
   const resetPassword = async (email: string): Promise<boolean> => {
     try {
-      console.log('🔄 Enviando solicitud de recuperación...', email);
-      
       const response = await authService.forgotPassword(email);
       
       if (response.success) {
-        console.log('✅ Email de recuperación enviado');
         return true;
       }
       
       return false;
     } catch (error) {
-      console.error('❌ Error en reseteo de contraseña:', error);
+      console.error('Error en reseteo de contraseña:', error);
       
       // Simular éxito para desarrollo
-      console.log('🔄 Simulando envío exitoso...');
       return true;
     }
   };
@@ -413,13 +383,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               };
               
               dispatch({ type: 'RESTORE_TOKEN', payload: { user: updatedUser, token } });
-              console.log('✅ Sesión restaurada desde backend');
             } else {
               throw new Error('Token inválido');
             }
           } catch (error) {
             // Si no se puede verificar con backend, eliminar sesión inválida
-            console.log('⚠️ Token inválido o backend no disponible, cerrando sesión');
             await SecureStore.deleteItemAsync('userToken');
             await SecureStore.deleteItemAsync('userData');
             dispatch({ type: 'LOGOUT' });
@@ -428,7 +396,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           dispatch({ type: 'LOGOUT' });
         }
       } catch (error) {
-        console.error('❌ Error restaurando sesión:', error);
+        console.error('Error restaurando sesión:', error);
         dispatch({ type: 'LOGOUT' });
       }
     };
@@ -440,14 +408,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     if (googleResponse?.type === 'success') {
       // Manejar respuesta exitosa de Google
-      console.log('Google OAuth response:', googleResponse);
     }
   }, [googleResponse]);
 
   useEffect(() => {
     if (facebookResponse?.type === 'success') {
       // Manejar respuesta exitosa de Facebook
-      console.log('Facebook OAuth response:', facebookResponse);
     }
   }, [facebookResponse]);
 

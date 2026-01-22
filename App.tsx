@@ -3,12 +3,11 @@
  * Aplicación principal con nuevas pantallas integradas
  */
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
 import { PaperProvider, MD3LightTheme } from 'react-native-paper';
-import * as SecureStore from 'expo-secure-store';
 
 // Importar sistema de diseño de FASE 7
 import DESIGN_SYSTEM from './src/theme/designSystem';
@@ -49,25 +48,6 @@ const customTheme = {
 // ================================
 
 const App: React.FC = () => {
-  // 🗑️ LIMPIEZA TEMPORAL: Eliminar tokens de modo demo antiguos
-  // QUITAR ESTE useEffect después de la primera ejecución exitosa
-  useEffect(() => {
-    const cleanupOldTokens = async () => {
-      try {
-        const token = await SecureStore.getItemAsync('userToken');
-        if (token && token.startsWith('demo_token_')) {
-          console.log('🗑️ Eliminando token de modo demo antiguo...');
-          await SecureStore.deleteItemAsync('userToken');
-          await SecureStore.deleteItemAsync('userData');
-          console.log('✅ Datos antiguos eliminados - se mostrará pantalla de login');
-        }
-      } catch (error) {
-        console.log('⚠️ Error limpiando tokens antiguos:', error);
-      }
-    };
-    cleanupOldTokens();
-  }, []);
-
   return (
     <PaperProvider theme={customTheme}>
       <SafeAreaProvider>

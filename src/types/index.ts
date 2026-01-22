@@ -238,11 +238,6 @@ export type MapStackParamList = {
     title?: string;
     subtitle?: string;
   };
-  LocationTest: undefined;
-  OpenStreetMapTest: undefined;
-  SimpleMapTest: undefined;
-  OSMMapTest: undefined;
-  WebMapTest: undefined;
   ReportDetail: { reportId: number };
   FilterMap: undefined;
 };

@@ -27,47 +27,34 @@ export const AdminBadgeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       const token = await SecureStore.getItemAsync('userToken');
       const userDataString = await SecureStore.getItemAsync('userData');
       
-      console.log('🔍 AdminBadgeContext: refreshBadges llamado');
-      console.log('🔑 Token existe:', !!token);
-      console.log('📄 UserData existe:', !!userDataString);
-      
       if (!token || !userDataString) {
         // Si no hay token o datos de usuario, resetear contadores
-        console.log('❌ No hay token o userData, reseteando contadores');
         setPendingReportsCount(0);
         setPendingUsersCount(0);
         return;
       }
 
       const userData = JSON.parse(userDataString);
-      console.log('👤 Tipo de usuario:', userData.tipo_usuario);
       
       const isAdmin = userData.tipo_usuario === 'ADMINISTRADOR' || 
                       userData.tipo_usuario === 'MODERADOR' ||
                       userData.tipo_usuario === 'admin';
       
-      console.log('👮 Es admin:', isAdmin);
-      
       if (!isAdmin) {
         // Si no es admin, resetear contadores
-        console.log('❌ Usuario no es admin, reseteando contadores');
         setPendingReportsCount(0);
         setPendingUsersCount(0);
         return;
       }
 
-      console.log('👮 AdminBadgeContext: Actualizando contadores de admin...');
-
       // Obtener estadísticas de reportes pendientes
       const statsResponse = await adminService.getReportsStats();
-      console.log('📡 AdminBadgeContext: Respuesta de stats:', JSON.stringify(statsResponse));
       
       if (statsResponse) {
         // pendientes_validacion puede venir como string o number
         const pendingReports = typeof statsResponse.pendientes_validacion === 'string' 
           ? parseInt(statsResponse.pendientes_validacion) 
           : (statsResponse.pendientes_validacion || 0);
-        console.log('📊 Reportes pendientes de validación:', pendingReports);
         setPendingReportsCount(pendingReports);
       }
 
@@ -75,7 +62,6 @@ export const AdminBadgeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       const usersResponse = await adminService.getPendingUsers();
       if (usersResponse) {
         const pendingUsers = usersResponse.length || 0;
-        console.log('👥 Usuarios pendientes de aprobación:', pendingUsers);
         setPendingUsersCount(pendingUsers);
       }
     } catch (error) {
@@ -84,7 +70,7 @@ export const AdminBadgeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       if (!errorMessage.includes('Token de acceso requerido') && 
           !errorMessage.includes('No autorizado') &&
           !errorMessage.includes('Acceso denegado')) {
-        console.error('❌ Error obteniendo contadores de admin:', error);
+        console.error('Error obteniendo contadores de admin:', error);
       }
       setPendingReportsCount(0);
       setPendingUsersCount(0);
@@ -111,7 +97,6 @@ export const AdminBadgeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       
       // Si acabamos de convertirnos en admin, refrescar inmediatamente
       if (!wasAdmin && nowAdmin) {
-        console.log('👮 Usuario admin detectado, refrescando badges...');
         await refreshBadges();
       }
     };

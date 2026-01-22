@@ -20,11 +20,10 @@ const pool = new Pool(dbConfig);
 
 // Eventos del pool
 pool.on('connect', () => {
-  console.log('✅ Nueva conexión establecida con PostgreSQL');
 });
 
 pool.on('error', (err) => {
-  console.error('❌ Error en el pool de PostgreSQL:', err);
+  console.error('Error en el pool de PostgreSQL:', err);
 });
 
 // Función para testear la conexión
@@ -33,34 +32,20 @@ const testConnection = async () => {
     const client = await pool.connect();
     const result = await client.query('SELECT NOW(), current_database(), current_user');
     client.release();
-    
-    console.log('✅ Conexión a PostgreSQL exitosa:', {
-      timestamp: result.rows[0].now,
-      database: result.rows[0].current_database,
-      user: result.rows[0].current_user
-    });
-    
     return true;
   } catch (error) {
-    console.error('❌ Error al conectar con PostgreSQL:', error.message);
+    console.error('Error al conectar con PostgreSQL:', error.message);
     return false;
   }
 };
 
 // Función para ejecutar consultas
 const query = async (text, params) => {
-  const start = Date.now();
   try {
     const result = await pool.query(text, params);
-    const duration = Date.now() - start;
-    console.log('📊 Query ejecutada:', { 
-      text: text.substring(0, 100) + (text.length > 100 ? '...' : ''),
-      duration: `${duration}ms`, 
-      rows: result.rowCount 
-    });
     return result;
   } catch (error) {
-    console.error('❌ Error en query:', { text: text.substring(0, 100), error: error.message });
+    console.error('Error en query:', { text: text.substring(0, 100), error: error.message });
     throw error;
   }
 };
@@ -94,7 +79,7 @@ const tableExists = async (tableName) => {
     );
     return result.rows[0].exists;
   } catch (error) {
-    console.error(`❌ Error verificando tabla ${tableName}:`, error.message);
+    console.error(`Error verificando tabla ${tableName}:`, error.message);
     return false;
   }
 };
@@ -102,8 +87,6 @@ const tableExists = async (tableName) => {
 // Función para verificar estructura de la base de datos
 const checkDatabaseStructure = async () => {
   try {
-    console.log('🔍 Verificando estructura de la base de datos...');
-    
     const tables = ['usuarios', 'reportes', 'categorias_problemas', 'zonas_geograficas'];
     const tablesStatus = {};
     
@@ -111,18 +94,10 @@ const checkDatabaseStructure = async () => {
       tablesStatus[table] = await tableExists(table);
     }
     
-    console.log('📋 Estado de las tablas:', tablesStatus);
-    
     const allTablesExist = Object.values(tablesStatus).every(exists => exists);
-    
-    if (!allTablesExist) {
-      console.log('⚠️ Algunas tablas no existen. Ejecuta los scripts de la carpeta database/');
-      console.log('💡 Comando sugerido: psql -U postgres -d monitoreo_ciudadano -f database/run_all.sql');
-    }
-    
     return allTablesExist;
   } catch (error) {
-    console.error('❌ Error verificando estructura de BD:', error.message);
+    console.error('Error verificando estructura de BD:', error.message);
     return false;
   }
 };

@@ -33,7 +33,7 @@ router.get('/', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error obteniendo categorías:', error);
+    console.error('Error obteniendo categorías:', error);
     res.status(500).json({
       success: false,
       message: 'Error interno del servidor'
@@ -104,7 +104,7 @@ router.get('/:id', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error obteniendo categoría:', error);
+    console.error('Error obteniendo categoría:', error);
     res.status(500).json({
       success: false,
       message: 'Error interno del servidor'

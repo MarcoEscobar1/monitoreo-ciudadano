@@ -103,7 +103,7 @@ router.get('/', authenticateToken, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error obteniendo notificaciones:', error);
+    console.error('Error obteniendo notificaciones:', error);
     res.status(500).json({
       success: false,
       message: 'Error interno del servidor'
@@ -124,7 +124,7 @@ router.patch('/:id/read', authenticateToken, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error marcando notificación:', error);
+    console.error('Error marcando notificación:', error);
     res.status(500).json({
       success: false,
       message: 'Error interno del servidor'

@@ -77,7 +77,7 @@ const ForgotPasswordScreen: React.FC = () => {
         <AnimatedEntrance type="slideInDown">
           <View style={styles.header}>
             <View style={styles.iconContainer}>
-              <Text style={styles.icon}>🔑</Text>
+              <Text style={styles.icon}>CLAVE</Text>
             </View>
             <Text style={styles.title}>Recuperar Contraseña</Text>
             <Text style={styles.subtitle}>
@@ -101,7 +101,7 @@ const ForgotPasswordScreen: React.FC = () => {
                       }
                     }}
                     error={emailError}
-                    leftIcon="📧"
+                    leftIcon="email"
                     keyboardType="email-address"
                     autoCapitalize="none"
                     style={styles.input}
@@ -120,7 +120,7 @@ const ForgotPasswordScreen: React.FC = () => {
               ) : (
                 <View style={styles.successContainer}>
                   <View style={styles.successIconContainer}>
-                    <Text style={styles.successIcon}>📧</Text>
+                    <Text style={styles.successIcon}>EMAIL</Text>
                   </View>
                   <Text style={styles.successTitle}>¡Email Enviado!</Text>
                   <Text style={styles.successText}>
@@ -164,7 +164,7 @@ const ForgotPasswordScreen: React.FC = () => {
           <Card style={styles.infoCard}>
             <CardContent>
               <View style={styles.infoHeader}>
-                <Text style={styles.infoIcon}>💡</Text>
+                <Text style={styles.infoIcon}>INFO</Text>
                 <Text style={styles.infoTitle}>Información importante</Text>
               </View>
               

@@ -32,21 +32,16 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         return;
       }
 
-      console.log('🔔 NotificationContext: Actualizando contador de no leídas...');
-
       // Obtener notificaciones leídas desde AsyncStorage
       const readNotifs = await AsyncStorage.getItem('readNotifications');
       const readSet = readNotifs ? new Set<string>(JSON.parse(readNotifs)) : new Set<string>();
-      console.log('📖 Notificaciones leídas en storage:', readSet.size);
 
       // Obtener todas las notificaciones del backend
       const response = await apiService.notifications.getNotifications();
-      console.log('📡 Respuesta del backend:', response.success, 'data:', response.data?.length);
       
       if (response.success && response.data) {
         // Contar cuántas no están en el readSet
         const unread = response.data.filter((notif: any) => !readSet.has(notif.id)).length;
-        console.log('🔢 Notificaciones sin leer:', unread, 'anterior:', unreadCount);
         
         // Actualizar el badge SIEMPRE
         const previousCount = unreadCount;
@@ -57,19 +52,18 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
           const newNotifications = response.data.filter((notif: any) => !readSet.has(notif.id));
           const latestNotif = newNotifications[0];
           
-          console.log('🔔 Nueva notificación detectada:', latestNotif?.titulo);
           setPopupShownThisSession(true);
           
           // Mostrar alerta de nueva notificación
           setTimeout(() => {
             Alert.alert(
-              '🔔 Nueva Notificación',
+              'Nueva Notificación',
               latestNotif?.mensaje || 'Tienes una nueva notificación',
               [
                 {
                   text: 'Ver',
                   onPress: () => {
-                    console.log('Usuario presionó Ver notificación');
+                    // Navegar a notificaciones
                   }
                 },
                 {
@@ -87,7 +81,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       // Silenciar errores de autenticación cuando no hay sesión
       const errorMessage = error instanceof Error ? error.message : String(error);
       if (!errorMessage.includes('Token de acceso requerido')) {
-        console.error('❌ Error obteniendo contador de no leídas:', error);
+        console.error('Error obteniendo contador de no leídas:', error);
       }
       setUnreadCount(0);
     }
@@ -104,13 +98,11 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       
       // Si el usuario cerró sesión, resetear el flag del popup
       if (wasAuthenticated && !nowAuthenticated) {
-        console.log('🔔 Usuario desautenticado, reseteando popup flag...');
         setPopupShownThisSession(false);
       }
       
       // Si acabamos de autenticarnos, refrescar inmediatamente y resetear flag
       if (!wasAuthenticated && nowAuthenticated) {
-        console.log('🔔 Usuario autenticado, refrescando notificaciones...');
         setPopupShownThisSession(false); // Permitir popup en nueva sesión
         await refreshUnreadCount();
       }

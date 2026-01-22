@@ -36,19 +36,9 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// CORS configurado para desarrollo
+// CORS configurado para desarrollo - permitir todos los orígenes para APK
 app.use(cors({
-  origin: [
-    'http://localhost:19006',
-    'exp://localhost:19000',
-    'exp://localhost:8081',
-    'http://localhost:3000',
-    'http://192.168.100.60:8081',
-    'http://192.168.100.60:19006',
-    'exp://192.168.100.60:8081',
-    'exp://192.168.100.60:19000'
-  ],
-  credentials: true,
+  origin: '*', // Permitir todos los orígenes para desarrollo
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
@@ -59,7 +49,6 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Middleware para logs de requests
 app.use((req, res, next) => {
-  console.log(`📝 ${req.method} ${req.path} - ${new Date().toISOString()}`);
   next();
 });
 
@@ -98,7 +87,6 @@ app.use('/api/admin', adminRoutes);
 
 // Middleware para rutas no encontradas
 app.use((req, res, next) => {
-  console.log(`❌ Ruta no encontrada: ${req.method} ${req.path}`);
   res.status(404).json({
     success: false,
     message: `Ruta no encontrada: ${req.method} ${req.path}`
@@ -120,7 +108,7 @@ app.use('*', (req, res) => {
 
 // Manejo de errores global
 app.use((error, req, res, next) => {
-  console.error('❌ Error del servidor:', error);
+  console.error('Error del servidor:', error);
   
   res.status(error.status || 500).json({
     success: false,
@@ -136,12 +124,10 @@ app.use((error, req, res, next) => {
 const startServer = async () => {
   try {
     // Probar conexión a la base de datos
-    console.log('🔄 Probando conexión a la base de datos...');
     const dbConnected = await testConnection();
     
     if (!dbConnected) {
-      console.error('❌ No se pudo conectar a la base de datos');
-      console.log('💡 Asegúrate de que PostgreSQL esté corriendo y las credenciales sean correctas');
+      console.error('No se pudo conectar a la base de datos');
       process.exit(1);
     }
 
@@ -162,35 +148,25 @@ const startServer = async () => {
 
     // Iniciar servidor
     app.listen(PORT, '0.0.0.0', () => {
-      console.log('🚀 ===============================================');
-      console.log(`🚀 Servidor iniciado en http://0.0.0.0:${PORT}`);
-      console.log(`🚀 Servidor también disponible en http://${localIP}:${PORT}`);
-      console.log('🚀 ===============================================');
-      console.log(`📊 Base de datos: ${dbConnected ? '✅ Conectada' : '❌ Desconectada'}`);
-      console.log(`🌐 API disponible en: http://${localIP}:${PORT}/api`);
-      console.log(`💚 Health check: http://${localIP}:${PORT}/api/health`);
-      console.log('🚀 ===============================================');
+      console.log(`Servidor iniciado en http://${localIP}:${PORT}`);
+      console.log(`Base de datos: ${dbConnected ? 'Conectada' : 'Desconectada'}`);
     });
 
   } catch (error) {
-    console.error('❌ Error iniciando el servidor:', error);
+    console.error('Error iniciando el servidor:', error);
     process.exit(1);
   }
 };
 
 // Manejar cierre del servidor
 process.on('SIGTERM', () => {
-  console.log('🔄 Cerrando servidor...');
   pool.end(() => {
-    console.log('✅ Conexiones de base de datos cerradas');
     process.exit(0);
   });
 });
 
 process.on('SIGINT', () => {
-  console.log('🔄 Cerrando servidor...');
   pool.end(() => {
-    console.log('✅ Conexiones de base de datos cerradas');
     process.exit(0);
   });
 });

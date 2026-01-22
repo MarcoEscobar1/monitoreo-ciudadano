@@ -115,7 +115,7 @@ const CreateReportScreen: React.FC = () => {
       
       setCategorias(categoriasUI);
     } catch (error) {
-      console.error('❌ Error cargando categorías:', error);
+      console.error('Error cargando categorías:', error);
       showSnackbar('Error al cargar categorías');
     } finally {
       setCargandoCategorias(false);
@@ -131,7 +131,7 @@ const CreateReportScreen: React.FC = () => {
         setDireccion(`${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}`);
       }
     } catch (error) {
-      console.error('❌ Error obteniendo ubicación:', error);
+      console.error('Error obteniendo ubicación:', error);
       showSnackbar('Error al obtener ubicación');
     } finally {
       setObteniendoUbicacion(false);
@@ -155,7 +155,7 @@ const CreateReportScreen: React.FC = () => {
         setImagen(result.assets[0].uri);
       }
     } catch (error) {
-      console.error('❌ Error seleccionando imagen:', error);
+      console.error('Error seleccionando imagen:', error);
       showSnackbar('Error al seleccionar imagen');
     }
   };
@@ -172,7 +172,7 @@ const CreateReportScreen: React.FC = () => {
         setImagen(result.assets[0].uri);
       }
     } catch (error) {
-      console.error('❌ Error tomando foto:', error);
+      console.error('Error tomando foto:', error);
       showSnackbar('Error al tomar foto');
     }
   };
@@ -242,7 +242,7 @@ const CreateReportScreen: React.FC = () => {
       await refreshUnreadCount();
       
       Alert.alert(
-        '✅ Reporte enviado',
+        'Reporte enviado',
         'Tu reporte ha sido enviado correctamente. En unos minutos será revisado y validado por nuestro equipo antes de aparecer en el mapa.',
         [
           {
@@ -255,7 +255,7 @@ const CreateReportScreen: React.FC = () => {
         ]
       );
     } catch (error) {
-      console.error('❌ Error enviando reporte:', error);
+      console.error('Error enviando reporte:', error);
       showSnackbar('Error al enviar el reporte. Intenta nuevamente.');
     } finally {
       setEnviando(false);
@@ -376,7 +376,7 @@ const CreateReportScreen: React.FC = () => {
                   >
                     <RadioButton value="baja" />
                     <View style={styles.prioridadInfo}>
-                      <Text style={styles.prioridadTexto}>🟢 Baja</Text>
+                      <Text style={styles.prioridadTexto}>Baja</Text>
                       <Text style={styles.prioridadDescripcion}>No es urgente</Text>
                     </View>
                   </TouchableOpacity>
@@ -387,7 +387,7 @@ const CreateReportScreen: React.FC = () => {
                   >
                     <RadioButton value="media" />
                     <View style={styles.prioridadInfo}>
-                      <Text style={styles.prioridadTexto}>🟡 Media</Text>
+                      <Text style={styles.prioridadTexto}>Media</Text>
                       <Text style={styles.prioridadDescripcion}>Atención moderada</Text>
                     </View>
                   </TouchableOpacity>
@@ -398,7 +398,7 @@ const CreateReportScreen: React.FC = () => {
                   >
                     <RadioButton value="alta" />
                     <View style={styles.prioridadInfo}>
-                      <Text style={styles.prioridadTexto}>🔴 Alta</Text>
+                      <Text style={styles.prioridadTexto}>Alta</Text>
                       <Text style={styles.prioridadDescripcion}>Atención urgente</Text>
                     </View>
                   </TouchableOpacity>
@@ -436,14 +436,14 @@ const CreateReportScreen: React.FC = () => {
               ) : (
                 <View style={styles.botonesImagen}>
                   <Button
-                    title="📷 Tomar Foto"
+                    title="Tomar Foto"
                     variant="outlined"
                     color="primary"
                     onPress={tomarFoto}
                     style={styles.botonImagen}
                   />
                   <Button
-                    title="🖼️ Galería"
+                    title="Galería"
                     variant="outlined"
                     color="primary"
                     onPress={seleccionarImagen}
@@ -469,7 +469,7 @@ const CreateReportScreen: React.FC = () => {
                 ) : ubicacion ? (
                   <View>
                     <Text style={styles.ubicacionTexto}>
-                      📍 {direccion}
+                      {direccion}
                     </Text>
                     <View style={styles.botonesUbicacion}>
                       <Button
@@ -491,7 +491,7 @@ const CreateReportScreen: React.FC = () => {
                 ) : (
                   <View>
                     <Text style={styles.placeholderText}>
-                      📍 No se ha seleccionado ubicación
+                      No se ha seleccionado ubicación
                     </Text>
                     <View style={styles.botonesUbicacion}>
                       <Button

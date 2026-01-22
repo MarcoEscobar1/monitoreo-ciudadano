@@ -71,7 +71,7 @@ router.post('/register', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error en registro:', error);
+    console.error('Error en registro:', error);
     res.status(500).json({
       success: false,
       message: 'Error interno del servidor'
@@ -87,11 +87,6 @@ router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    console.log('🔐 LOGIN ATTEMPT:');
-    console.log('   Email recibido:', JSON.stringify(email));
-    console.log('   Email length:', email?.length);
-    console.log('   Password length:', password?.length);
-
     // Validaciones básicas
     if (!email || !password) {
       return res.status(400).json({
@@ -101,7 +96,6 @@ router.post('/login', async (req, res) => {
     }
 
     const emailLower = email.toLowerCase();
-    console.log('   Email después de toLowerCase:', JSON.stringify(emailLower));
 
     // Buscar usuario
     const result = await query(`
@@ -110,15 +104,7 @@ router.post('/login', async (req, res) => {
       WHERE email = $1 AND activo = true
     `, [emailLower]);
 
-    console.log('   Usuarios encontrados:', result.rows.length);
-    if (result.rows.length > 0) {
-      console.log('   Usuario encontrado:', result.rows[0].email);
-      console.log('   Tipo usuario:', result.rows[0].tipo_usuario);
-      console.log('   Cuenta validada:', result.rows[0].cuenta_validada);
-    }
-
     if (result.rows.length === 0) {
-      console.log('❌ Usuario no encontrado en DB');
       return res.status(401).json({
         success: false,
         message: 'Credenciales inválidas'
@@ -127,16 +113,10 @@ router.post('/login', async (req, res) => {
 
     const user = result.rows[0];
 
-    console.log('🔑 Verificando password...');
-    console.log('   Hash en DB (primeros 20):', user.password_hash?.substring(0, 20));
-
     // Verificar contraseña
     const passwordValid = await bcrypt.compare(password, user.password_hash);
     
-    console.log('   Password válido:', passwordValid);
-    
     if (!passwordValid) {
-      console.log('❌ Password incorrecto');
       return res.status(401).json({
         success: false,
         message: 'Credenciales inválidas'
@@ -145,15 +125,12 @@ router.post('/login', async (req, res) => {
 
     // Verificar si la cuenta está validada (solo para ciudadanos)
     if (user.tipo_usuario === 'CIUDADANO' && !user.cuenta_validada) {
-      console.log('⏳ Cuenta pendiente de validación');
       return res.status(403).json({
         success: false,
         message: 'Tu cuenta está pendiente de validación por un administrador. Por favor espera a que revisen tu solicitud.',
         requiresValidation: true
       });
     }
-
-    console.log('✅ Login exitoso para:', user.email);
 
     // Generar JWT
     const token = jwt.sign(
@@ -187,7 +164,7 @@ router.post('/login', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error en login:', error);
+    console.error('Error en login:', error);
     res.status(500).json({
       success: false,
       message: 'Error interno del servidor'
@@ -245,7 +222,7 @@ router.get('/verify', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error verificando token:', error);
+    console.error('Error verificando token:', error);
     res.status(401).json({
       success: false,
       message: 'Token inválido'
@@ -284,7 +261,7 @@ router.post('/forgot-password', async (req, res) => {
     // En una implementación real, aquí enviarías un email con un token de recuperación
 
   } catch (error) {
-    console.error('❌ Error en recuperación de contraseña:', error);
+    console.error('Error en recuperación de contraseña:', error);
     res.status(500).json({
       success: false,
       message: 'Error interno del servidor'
@@ -309,7 +286,7 @@ router.post('/logout', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error en logout:', error);
+    console.error('Error en logout:', error);
     res.status(500).json({
       success: false,
       message: 'Error interno del servidor'

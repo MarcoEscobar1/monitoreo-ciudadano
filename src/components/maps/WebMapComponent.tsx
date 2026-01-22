@@ -167,7 +167,7 @@ const WebMapComponent: React.FC<WebMapComponentProps> = ({
         }
       }
     } catch (error) {
-      console.error('❌ Error obteniendo ubicación:', error);
+      console.error('Error obteniendo ubicacion:', error);
       Alert.alert('Error', 'No se pudo obtener tu ubicación actual.');
     } finally {
       setIsLoadingLocation(false);
@@ -203,9 +203,6 @@ const WebMapComponent: React.FC<WebMapComponentProps> = ({
     const lat = userLocation?.latitude || region.latitude;
     const lng = userLocation?.longitude || region.longitude;
     
-    console.log('🗺️ [WebMapComponent] Creando mapa con reportes:', reports.length);
-    console.log('📍 [WebMapComponent] Reportes recibidos:', reports);
-    
     // Crear marcadores de reportes
     const reportMarkers = reports.map(report => ({
       lat: report.ubicacion.latitude,
@@ -229,10 +226,6 @@ const WebMapComponent: React.FC<WebMapComponentProps> = ({
     }));
 
     const allMarkers = [...reportMarkers, ...customMarkers];
-    
-    console.log('🎯 [WebMapComponent] Total marcadores a mostrar:', allMarkers.length);
-    console.log('📍 [WebMapComponent] Marcadores de reportes:', reportMarkers.length);
-    console.log('🔘 [WebMapComponent] Marcadores personalizados:', customMarkers.length);
     
     return `
     <!DOCTYPE html>
@@ -279,7 +272,7 @@ const WebMapComponent: React.FC<WebMapComponentProps> = ({
             ${userLocation ? `
             const userMarker = L.marker([${lat}, ${lng}])
                 .addTo(map)
-                .bindPopup('<div class="marker-popup"><b>📍 Tu Ubicación</b><br>Lat: ${lat.toFixed(6)}<br>Lng: ${lng.toFixed(6)}</div>');
+                .bindPopup('<div class="marker-popup"><b>Tu Ubicacion</b><br>Lat: ${lat.toFixed(6)}<br>Lng: ${lng.toFixed(6)}</div>');
             ` : ''}
             
             // Agregar marcadores de reportes y personalizados
@@ -304,7 +297,7 @@ const WebMapComponent: React.FC<WebMapComponentProps> = ({
             const selectedMarker = L.marker([${selectedMarker.latitude}, ${selectedMarker.longitude}], {
                 draggable: ${locationSelectionMode}
             }).addTo(map)
-              .bindPopup('<div class="marker-popup"><b>📍 Ubicación Seleccionada</b><br>Lat: ${selectedMarker.latitude.toFixed(6)}<br>Lng: ${selectedMarker.longitude.toFixed(6)}</div>');
+              .bindPopup('<div class="marker-popup"><b>Ubicacion Seleccionada</b><br>Lat: ${selectedMarker.latitude.toFixed(6)}<br>Lng: ${selectedMarker.longitude.toFixed(6)}</div>');
             
             if (${locationSelectionMode}) {
                 selectedMarker.on('dragend', function(e) {
@@ -329,7 +322,7 @@ const WebMapComponent: React.FC<WebMapComponentProps> = ({
                 }
                 window.selectedLocationMarker = L.marker([lat, lng], { draggable: true })
                     .addTo(map)
-                    .bindPopup('<div class="marker-popup"><b>📍 Nueva Ubicación</b><br>Lat: ' + lat.toFixed(6) + '<br>Lng: ' + lng.toFixed(6) + '</div>');
+                    .bindPopup('<div class="marker-popup"><b>Nueva Ubicacion</b><br>Lat: ' + lat.toFixed(6) + '<br>Lng: ' + lng.toFixed(6) + '</div>');
                 
                 window.selectedLocationMarker.on('dragend', function(e) {
                     const position = e.target.getLatLng();
@@ -342,7 +335,7 @@ const WebMapComponent: React.FC<WebMapComponentProps> = ({
                 // Mostrar popup con coordenadas
                 L.popup()
                     .setLatLng(e.latlng)
-                    .setContent('<div class="marker-popup"><b>📍 Coordenadas</b><br>Lat: ' + lat.toFixed(6) + '<br>Lng: ' + lng.toFixed(6) + '</div>')
+                    .setContent('<div class="marker-popup"><b>Coordenadas</b><br>Lat: ' + lat.toFixed(6) + '<br>Lng: ' + lng.toFixed(6) + '</div>')
                     .openOn(map);
                 `}
                 
@@ -385,7 +378,6 @@ const WebMapComponent: React.FC<WebMapComponentProps> = ({
       switch (data.type) {
         case 'mapReady':
           setMapReady(true);
-          console.log('🗺️ Mapa web Leaflet listo:', data.location);
           break;
           
         case 'mapPress':
@@ -401,7 +393,7 @@ const WebMapComponent: React.FC<WebMapComponentProps> = ({
                   onLocationSelect(locationInfo);
                 }
               } catch (error) {
-                console.error('❌ Error en geocodificación inversa:', error);
+                console.error('Error en geocodificacion inversa:', error);
                 onLocationSelect({
                   latitude: coordinate.latitude,
                   longitude: coordinate.longitude,
@@ -443,7 +435,7 @@ const WebMapComponent: React.FC<WebMapComponentProps> = ({
           break;
       }
     } catch (error) {
-      console.error('❌ Error procesando mensaje WebView:', error);
+      console.error('Error procesando mensaje WebView:', error);
     }
   };
 
@@ -474,8 +466,8 @@ const WebMapComponent: React.FC<WebMapComponentProps> = ({
         scalesPageToFit={true}
         bounces={false}
         scrollEnabled={scrollEnabled}
-        onLoadStart={() => console.log('🗺️ Iniciando carga del mapa web')}
-        onLoadEnd={() => console.log('🗺️ Mapa web cargado completamente')}
+        onLoadStart={() => {}}
+        onLoadEnd={() => {}}
         renderLoading={() => (
           <View style={styles.loadingOverlay}>
             <Card style={styles.loadingCard}>

@@ -200,7 +200,7 @@ const StatsSection: React.FC<{ stats: DashboardStats }> = ({ stats }) => {
             <View style={styles.statsRow}>
               <View style={styles.statItem}>
                 <View style={styles.statHeader}>
-                  <Text style={styles.statIcon}>📊</Text>
+                  <Text style={styles.statIcon}>#</Text>
                   <View style={styles.statInfo}>
                     <Text style={styles.statTitle}>TOTAL</Text>
                     <Text style={styles.statValue}>{stats.totalReportes}</Text>
@@ -210,7 +210,7 @@ const StatsSection: React.FC<{ stats: DashboardStats }> = ({ stats }) => {
 
               <View style={styles.statItem}>
                 <View style={styles.statHeader}>
-                  <Text style={styles.statIcon}>⏳</Text>
+                  <Text style={styles.statIcon}>...</Text>
                   <View style={styles.statInfo}>
                     <Text style={styles.statTitle}>EN REVISIÓN</Text>
                     <Text style={styles.statValue}>{stats.reportesEnRevision}</Text>
@@ -226,7 +226,7 @@ const StatsSection: React.FC<{ stats: DashboardStats }> = ({ stats }) => {
             <View style={styles.statsRow}>
               <View style={styles.statItem}>
                 <View style={styles.statHeader}>
-                  <Text style={styles.statIcon}>✅</Text>
+                  <Text style={styles.statIcon}>+</Text>
                   <View style={styles.statInfo}>
                     <Text style={styles.statTitle}>ACEPTADOS</Text>
                     <Text style={styles.statValue}>{stats.reportesAceptados}</Text>
@@ -236,7 +236,7 @@ const StatsSection: React.FC<{ stats: DashboardStats }> = ({ stats }) => {
 
               <View style={styles.statItem}>
                 <View style={styles.statHeader}>
-                  <Text style={styles.statIcon}>❌</Text>
+                  <Text style={styles.statIcon}>-</Text>
                   <View style={styles.statInfo}>
                     <Text style={styles.statTitle}>RECHAZADOS</Text>
                     <Text style={styles.statValue}>{stats.reportesRechazados}</Text>
@@ -371,9 +371,9 @@ const HistorialReportesSection: React.FC<{
   };
 
   const getEstadoTexto = (reporte: any) => {
-    if (reporte.validado === true) return '✅ Aceptado';
-    if (reporte.validado === false) return '❌ Rechazado';
-    return '⏳ En revisión';
+    if (reporte.validado === true) return 'Aceptado';
+    if (reporte.validado === false) return 'Rechazado';
+    return 'En revision';
   };
 
   if (loading) {
@@ -400,8 +400,8 @@ const HistorialReportesSection: React.FC<{
   const listItems = reportes.map((reporte) => ({
     id: reporte.id,
     title: reporte.titulo,
-    subtitle: reporte.categoria?.nombre || 'Sin categoría',
-    leftIcon: reporte.categoria?.emoji || '📋',
+    subtitle: reporte.categoria?.nombre || 'Sin categoria',
+    leftIcon: reporte.categoria?.emoji || '',
     rightContent: (
       <View style={styles.reportStatusContainer}>
         <Text style={[styles.reportStatus, { color: getEstadoColor(reporte) }]}>
@@ -410,8 +410,6 @@ const HistorialReportesSection: React.FC<{
       </View>
     ),
     onPress: () => {
-      console.log('🔍 Navegando a reporte con ID:', reporte.id);
-      console.log('📝 Datos del reporte:', { id: reporte.id, titulo: reporte.titulo, validado: reporte.validado });
       onViewReport?.(reporte.id);
     },
   }));
@@ -459,8 +457,6 @@ export const Dashboard: React.FC<Props> = ({
       
       // Obtener todos los reportes del usuario
       const reportes = await reporteService.obtenerMisReportes();
-      console.log('📊 Reportes cargados en Dashboard:', reportes.length);
-      console.log('📋 IDs de reportes:', reportes.map((r: any) => r.id));
       setUserReports(reportes);
 
       // Calcular estadísticas

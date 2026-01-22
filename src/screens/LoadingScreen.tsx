@@ -113,7 +113,7 @@ const LoadingScreen: React.FC = () => {
       {/* Logo animado */}
       <Animated.View style={[styles.logoContainer, logoAnimatedStyle]}>
         <View style={styles.logo}>
-          <Text style={styles.logoIcon}>🏛️</Text>
+          <Text style={styles.logoIcon}>MC</Text>
         </View>
         <View style={styles.logoRing} />
         <View style={styles.logoRingOuter} />

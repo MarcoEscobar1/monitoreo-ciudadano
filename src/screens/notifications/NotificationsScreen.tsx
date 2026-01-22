@@ -31,7 +31,6 @@ const NotificationsScreen: React.FC = () => {
   // Guardar notificaciones leídas en AsyncStorage
   const saveReadNotifications = async (readSet: Set<string>) => {
     try {
-      console.log('💾 Guardando notificaciones leídas:', Array.from(readSet));
       await AsyncStorage.setItem('readNotifications', JSON.stringify(Array.from(readSet)));
     } catch (error) {
       console.error('Error guardando notificaciones leídas:', error);
@@ -43,9 +42,7 @@ const NotificationsScreen: React.FC = () => {
     try {
       if (showLoader) setLoading(true);
       
-      console.log('📡 Llamando a API de notificaciones...');
       const response = await apiService.notifications.getNotifications();
-      console.log('✅ Respuesta recibida:', response);
       
       if (response.success && response.data) {
         // Usar el readSet proporcionado o el estado actual
@@ -64,14 +61,12 @@ const NotificationsScreen: React.FC = () => {
           reporte_id: notif.reporte_id
         }));
         
-        console.log('📋 Notificaciones transformadas:', transformedNotifications.length);
         setNotifications(transformedNotifications);
       } else {
-        console.log('⚠️ No hay datos en la respuesta');
         setNotifications([]);
       }
     } catch (error) {
-      console.error('❌ Error cargando notificaciones:', error);
+      console.error('Error cargando notificaciones:', error);
       setNotifications([]);
       Alert.alert(
         'Error',
@@ -79,7 +74,6 @@ const NotificationsScreen: React.FC = () => {
         [{ text: 'OK' }]
       );
     } finally {
-      console.log('✅ Finalizando carga...');
       setLoading(false);
       setRefreshing(false);
     }
@@ -88,14 +82,12 @@ const NotificationsScreen: React.FC = () => {
   useEffect(() => {
     const initializeNotifications = async () => {
       try {
-        console.log('🔄 Inicializando notificaciones...');
         const readNotifs = await AsyncStorage.getItem('readNotifications');
         let readSet = new Set<string>();
         
         if (readNotifs) {
           try {
             const parsedArray = JSON.parse(readNotifs);
-            console.log('📄 Datos parseados:', parsedArray);
             
             // Validar que sea un array
             if (Array.isArray(parsedArray)) {
@@ -107,18 +99,17 @@ const NotificationsScreen: React.FC = () => {
               });
             }
           } catch (parseError) {
-            console.error('❌ Error parseando notificaciones:', parseError);
+            console.error('Error parseando notificaciones:', parseError);
             // Si hay error al parsear, limpiar el storage
             await AsyncStorage.removeItem('readNotifications');
           }
         }
         
-        console.log('📖 Notificaciones leídas cargadas:', Array.from(readSet));
         setReadNotifications(readSet);
         
         await fetchNotifications(true, readSet);
       } catch (error) {
-        console.error('❌ Error en inicialización:', error);
+        console.error('Error en inicialización:', error);
         setLoading(false);
         setNotifications([]);
       }
@@ -130,7 +121,6 @@ const NotificationsScreen: React.FC = () => {
   // Refrescar notificaciones cuando la pantalla obtiene el foco
   useFocusEffect(
     React.useCallback(() => {
-      console.log('🔄 Pantalla de notificaciones obtuvo el foco, refrescando...');
       fetchNotifications(false);
     }, [])
   );
@@ -207,7 +197,7 @@ const NotificationsScreen: React.FC = () => {
     
     if (notificacionesSinLeer === 0) {
       Alert.alert(
-        '📧 Sin notificaciones',
+        'Sin notificaciones',
         'No hay notificaciones sin leer',
         [{ text: 'OK' }]
       );
@@ -215,7 +205,7 @@ const NotificationsScreen: React.FC = () => {
     }
 
     Alert.alert(
-      '📖 Marcar como leídas',
+      'Marcar como leídas',
       `¿Estás seguro de que quieres marcar ${notificacionesSinLeer} notificación${notificacionesSinLeer > 1 ? 'es' : ''} como leída${notificacionesSinLeer > 1 ? 's' : ''}?`,
       [
         {
@@ -244,7 +234,7 @@ const NotificationsScreen: React.FC = () => {
             }
             
             Alert.alert(
-              '✅ Completado',
+              'Completado',
               'Todas las notificaciones han sido marcadas como leídas',
               [{ text: 'OK' }]
             );
@@ -313,13 +303,13 @@ const NotificationsScreen: React.FC = () => {
       <View style={styles.content}>
         <AnimatedEntrance type="slideInDown">
           <View style={styles.header}>
-            <Text style={styles.title}>🔔 Notificaciones</Text>
+            <Text style={styles.title}>Notificaciones</Text>
             <Text style={styles.subtitle}>
               Revisa el estado de tus reportes ciudadanos
             </Text>
             {notifications.length > 0 && (
               <TouchableOpacity onPress={handleRefresh} style={styles.refreshButton}>
-                <Text style={styles.refreshText}>🔄 Actualizar</Text>
+                <Text style={styles.refreshText}>Actualizar</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -339,7 +329,7 @@ const NotificationsScreen: React.FC = () => {
                 )
               ) : (
                 <View style={styles.emptyState}>
-                  <Text style={styles.emptyIcon}>📭</Text>
+                  <Text style={styles.emptyIcon}>---</Text>
                   <Text style={styles.emptyTitle}>No hay notificaciones recientes</Text>
                   <Text style={styles.emptyText}>
                     Aquí verás el estado de tus reportes más recientes
@@ -377,7 +367,7 @@ const NotificationsScreen: React.FC = () => {
                 )
               ) : (
                 <View style={styles.emptyState}>
-                  <Text style={styles.emptyIcon}>📂</Text>
+                  <Text style={styles.emptyIcon}>---</Text>
                   <Text style={styles.emptyTitle}>Sin historial</Text>
                   <Text style={styles.emptyText}>
                     El historial de tus reportes anteriores aparecerá aquí

@@ -38,7 +38,7 @@ router.get('/', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error obteniendo zonas:', error);
+    console.error('Error obteniendo zonas:', error);
     res.status(500).json({
       success: false,
       message: 'Error interno del servidor'

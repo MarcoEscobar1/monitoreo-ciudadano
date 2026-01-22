@@ -89,7 +89,7 @@ const LoginScreen: React.FC = () => {
       const success = await login(email, password);
       if (!success) {
         Alert.alert(
-          '❌ Error de autenticación',
+          'Error de autenticación',
           'Usuario o contraseña incorrectos. Por favor, verifica tus credenciales e intenta nuevamente.',
           [{ text: 'Entendido' }]
         );
@@ -100,7 +100,7 @@ const LoginScreen: React.FC = () => {
       // Si la cuenta está pendiente de validación
       if (error.message === 'ACCOUNT_PENDING_VALIDATION') {
         Alert.alert(
-          '⏳ Cuenta pendiente de validación',
+          'Cuenta pendiente de validación',
           'Tu cuenta está esperando aprobación del administrador. Te notificaremos cuando puedas iniciar sesión.',
           [{ text: 'Entendido' }]
         );
@@ -110,7 +110,7 @@ const LoginScreen: React.FC = () => {
       const errorMessage = error.message || 'Usuario o contraseña incorrectos';
       
       Alert.alert(
-        '❌ Error de autenticación',
+        'Error de autenticación',
         errorMessage,
         [{ text: 'Entendido' }]
       );

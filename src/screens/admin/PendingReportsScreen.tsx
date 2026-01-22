@@ -57,7 +57,6 @@ const PendingReportsScreen = ({ navigation }: any) => {
   // Refrescar badges cuando la pantalla gana foco
   useFocusEffect(
     React.useCallback(() => {
-      console.log('👮 PendingReportsScreen enfocada, actualizando badges...');
       refreshBadges();
     }, [refreshBadges])
   );

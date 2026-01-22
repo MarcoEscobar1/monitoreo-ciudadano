@@ -33,10 +33,9 @@ class ImageService {
       const dirInfo = await FileSystem.getInfoAsync(this.uploadDirectory);
       if (!dirInfo.exists) {
         await FileSystem.makeDirectoryAsync(this.uploadDirectory, { intermediates: true });
-        console.log('📁 Directorio de uploads creado');
       }
     } catch (error) {
-      console.error('❌ Error creando directorio de uploads:', error);
+      console.error('Error creando directorio de uploads:', error);
     }
   }
 
@@ -58,7 +57,7 @@ class ImageService {
         mediaLibrary: mediaResult.status === 'granted',
       };
     } catch (error) {
-      console.error('❌ Error solicitando permisos:', error);
+      console.error('Error solicitando permisos:', error);
       return { camera: false, mediaLibrary: false };
     }
   }
@@ -81,7 +80,7 @@ class ImageService {
         mediaLibrary: mediaStatus.status === 'granted',
       };
     } catch (error) {
-      console.error('❌ Error verificando permisos:', error);
+      console.error('Error verificando permisos:', error);
       return { camera: false, mediaLibrary: false };
     }
   }
@@ -132,7 +131,7 @@ class ImageService {
         base64: asset.base64 || undefined,
       };
     } catch (error) {
-      console.error('❌ Error capturando foto:', error);
+      console.error('Error capturando foto:', error);
       Alert.alert('Error', 'No se pudo tomar la foto. Inténtalo de nuevo.');
       return null;
     }
@@ -184,7 +183,7 @@ class ImageService {
         base64: asset.base64 || undefined,
       }));
     } catch (error) {
-      console.error('❌ Error seleccionando imagen:', error);
+      console.error('Error seleccionando imagen:', error);
       Alert.alert('Error', 'No se pudo seleccionar la imagen. Inténtalo de nuevo.');
       return null;
     }
@@ -244,10 +243,9 @@ class ImageService {
         to: localUri,
       });
 
-      console.log('💾 Imagen guardada localmente:', localUri);
       return localUri;
     } catch (error) {
-      console.error('❌ Error guardando imagen localmente:', error);
+      console.error('Error guardando imagen localmente:', error);
       return null;
     }
   }
@@ -264,10 +262,9 @@ class ImageService {
     try {
       // En una implementación real, aquí usarías una librería como expo-image-manipulator
       // Por ahora, retornamos la URI original
-      console.log('🔄 Redimensionando imagen (simulado):', { maxWidth, maxHeight, quality });
       return uri;
     } catch (error) {
-      console.error('❌ Error redimensionando imagen:', error);
+      console.error('Error redimensionando imagen:', error);
       return null;
     }
   }
@@ -295,7 +292,7 @@ class ImageService {
         size: info.size || 0,
       };
     } catch (error) {
-      console.error('❌ Error obteniendo info de imagen:', error);
+      console.error('Error obteniendo info de imagen:', error);
       return null;
     }
   }
@@ -305,8 +302,6 @@ class ImageService {
    */
   async uploadImage(imageData: ImageData): Promise<ImageUploadResult> {
     try {
-      console.log('⬆️ Simulando upload de imagen:', imageData.filename);
-      
       // Guardar localmente primero
       const localUri = await this.saveImageLocally(imageData);
       
@@ -323,15 +318,13 @@ class ImageService {
       // En una implementación real, aquí harías el POST a tu API
       const mockImageUrl = `https://api.monitoreo-ciudadano.com/images/${imageData.filename}`;
 
-      console.log('✅ Upload simulado exitoso:', mockImageUrl);
-
       return {
         success: true,
         imageUrl: mockImageUrl,
         localUri: localUri,
       };
     } catch (error) {
-      console.error('❌ Error en upload de imagen:', error);
+      console.error('Error en upload de imagen:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Error desconocido',
@@ -348,13 +341,12 @@ class ImageService {
       
       if (info.exists) {
         await FileSystem.deleteAsync(uri);
-        console.log('🗑️ Imagen local eliminada:', uri);
         return true;
       }
       
       return false;
     } catch (error) {
-      console.error('❌ Error eliminando imagen local:', error);
+      console.error('Error eliminando imagen local:', error);
       return false;
     }
   }
@@ -381,13 +373,12 @@ class ImageService {
             
             if (fileAge > maxAge) {
               await FileSystem.deleteAsync(filePath);
-              console.log('🧹 Imagen temporal eliminada:', file);
             }
           }
         }
       }
     } catch (error) {
-      console.error('❌ Error limpiando imágenes temporales:', error);
+      console.error('Error limpiando imágenes temporales:', error);
     }
   }
 }

@@ -37,13 +37,11 @@ const ProfileScreen: React.FC = () => {
           style: 'destructive',
           onPress: async () => {
             try {
-              console.log('🔄 Iniciando logout desde ProfileScreen...');
               await logout();
-              console.log('✅ Logout completado, navegación automática al login');
             } catch (error) {
-              console.error('❌ Error en logout:', error);
+              console.error('Error en logout:', error);
               Alert.alert(
-                '❌ Error',
+                'Error',
                 'Hubo un problema al cerrar sesión. Se cerrará la sesión localmente.',
                 [{ text: 'OK' }]
               );

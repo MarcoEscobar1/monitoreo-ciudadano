@@ -74,10 +74,8 @@ class ReporteService {
       if (allReportes.length > 0) {
         this.nextId = Math.max(...allReportes.map(r => r.id)) + 1;
       }
-
-      console.log(`📊 Reportes cargados: ${this.reportes.length} públicos, ${this.misReportes.length} míos`);
     } catch (error) {
-      console.error('❌ Error cargando reportes:', error);
+      console.error('Error cargando reportes:', error);
     }
   }
 
@@ -91,7 +89,7 @@ class ReporteService {
         AsyncStorage.setItem(this.MY_REPORTS_KEY, JSON.stringify(this.misReportes)),
       ]);
     } catch (error) {
-      console.error('❌ Error guardando reportes:', error);
+      console.error('Error guardando reportes:', error);
     }
   }
 
@@ -109,7 +107,6 @@ class ReporteService {
     es_anonimo?: boolean;
   }): Promise<ReporteCreationResult> {
     try {
-      console.log('📝 Creando nuevo reporte...');
 
       // 1. Validar datos básicos
       if (!data.titulo?.trim()) {
@@ -136,16 +133,14 @@ class ReporteService {
               data.imagen.startsWith('https://')) {
             
             imagenesProcesadas.push(data.imagen);
-            console.log('✅ Imagen válida detectada:', data.imagen.substring(0, 50) + '...');
           } else {
-            console.warn('⚠️ Formato de imagen no reconocido:', data.imagen.substring(0, 50));
             return { 
               success: false, 
               error: 'Formato de imagen no válido. Use cámara o galería.' 
             };
           }
         } catch (error) {
-          console.error('❌ Error procesando imagen:', error);
+          console.error('Error procesando imagen:', error);
           return { 
             success: false, 
             error: 'Error al procesar la imagen' 
@@ -171,7 +166,6 @@ class ReporteService {
         const response = await reportService.create(reporteData);
         
         if (response.success && response.data) {
-          console.log('✅ Reporte creado en backend:', response.data.id);
           
           // Convertir respuesta del backend a formato local
           const nuevoReporte: Reporte = {
@@ -214,7 +208,7 @@ class ReporteService {
           };
         }
       } catch (backendError) {
-        console.log('⚠️ Backend no disponible, guardando localmente...', backendError);
+        // Backend no disponible, guardar localmente
       }
 
       // 4. Si el backend no está disponible, crear reporte local
@@ -261,8 +255,6 @@ class ReporteService {
       this.misReportes.push(nuevoReporte);
       this.reportes.push(nuevoReporte);
       await this.saveReportesToStorage();
-
-      console.log(`✅ Reporte creado localmente: ID ${nuevoReporte.id}`);
       
       return {
         success: true,
@@ -271,7 +263,7 @@ class ReporteService {
       };
 
     } catch (error) {
-      console.error('❌ Error creando reporte:', error);
+      console.error('Error creando reporte:', error);
       return {
         success: false,
         error: 'Error interno del sistema'
@@ -333,15 +325,13 @@ class ReporteService {
    */
   async getReportesParaMapa(filtro?: any): Promise<Reporte[]> {
     try {
-      console.log('🗺️ Obteniendo reportes validados para mapa...');
       const response = await reportService.getForMap(filtro);
       
       if (response.success && response.data && response.data.length > 0) {
-        console.log(`✅ Reportes validados obtenidos: ${response.data.length}`);
         return response.data;
       }
     } catch (error) {
-      console.log('⚠️ Error obteniendo reportes para mapa:', error);
+      // Error obteniendo reportes para mapa, usar fallback local
     }
 
     // Fallback: filtrar reportes locales solo validados
@@ -357,11 +347,10 @@ class ReporteService {
       const backendReportes = await reportService.getAll(filtro);
       
       if (backendReportes && backendReportes.length > 0) {
-        console.log(`✅ Reportes obtenidos del backend: ${backendReportes.length}`);
         return backendReportes;
       }
     } catch (error) {
-      console.log('⚠️ Backend no disponible, usando reportes locales');
+      // Backend no disponible, usar reportes locales
     }
 
     // Usar reportes locales como fallback
@@ -453,10 +442,9 @@ class ReporteService {
       }
 
       await this.saveReportesToStorage();
-      console.log(`✅ Estado del reporte ${id} actualizado a: ${nuevoEstado}`);
       return true;
     } catch (error) {
-      console.error('❌ Error actualizando estado:', error);
+      console.error('Error actualizando estado:', error);
       return false;
     }
   }
@@ -466,17 +454,15 @@ class ReporteService {
    */
   async obtenerMisReportes(): Promise<any[]> {
     try {
-      console.log('📥 Obteniendo reportes del usuario...');
       const response = await reportService.getMy();
       
       if (response.success && response.data) {
-        console.log(`✅ Reportes del usuario obtenidos: ${response.data.length}`);
         return response.data;
       }
       
       return [];
     } catch (error) {
-      console.error('❌ Error obteniendo mis reportes:', error);
+      console.error('Error obteniendo mis reportes:', error);
       return [];
     }
   }
